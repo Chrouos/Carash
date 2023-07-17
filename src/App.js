@@ -3,35 +3,32 @@ import "./App.css";
 import HeaderComponent from "./components/Header";
 import FooterComponent from "./components/Footer";
 import Chat from "./views/Chat";
+import Home from "./views/Home";
 
 import React from "react";
 import { Layout } from "antd";
+import { Route, Routes } from "react-router-dom";
 
 
 function App() {
 
-  const headerMenuTitle = ["Home", "Chat"].map((label, index) => {
-    const key = String(index + 1);
-    return {
-      key,
-      label
-    }
-  });
+  return (  
 
-  return (
     <div style={{height: '100%'}}>
-
       <Layout style={{height: '100%'}}>
 
-        <HeaderComponent HeaderMenuTitle={headerMenuTitle}></HeaderComponent>
-        
-        {/* TODO: react router */}
-        <Chat/>        
+        <HeaderComponent></HeaderComponent>
 
+        <Routes>
+          <Route path="/chat" element={ <Chat /> } />
+          <Route path="/" element={ <Home /> } />
+        </Routes>
+        
         <FooterComponent></FooterComponent>
 
       </Layout>
     </div>
+
   );
 }
 
