@@ -4,6 +4,7 @@ import HeaderComponent from "./components/Header";
 import FooterComponent from "./components/Footer";
 import Chat from "./views/Chat";
 import Home from "./views/Home";
+import Agent from "./views/Agent";
 
 import React from "react";
 import { Layout } from "antd";
@@ -22,6 +23,7 @@ function App() {
         <Routes>
           <Route path="/chat" element={ <Chat /> } />
           <Route path="/" element={ <Home /> } />
+          <Route path="/agent" element={ <Agent /> } />
         </Routes>
         
         <FooterComponent></FooterComponent>
