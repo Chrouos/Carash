@@ -6,7 +6,7 @@ const {Footer} = Layout;
 const FooterComponent = () => {
     
     return(
-        <Footer style={{textAlign: 'center'}}> Design By WIDM </Footer>
+        <Footer style={{textAlign: 'center'}}> Design By @WIDM </Footer>
     )
 }
 
