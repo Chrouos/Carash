@@ -44,6 +44,7 @@ function Home() {
           <Column title="Car" dataIndex="car" key="car" />
           <Column title="Crime" dataIndex="crime" key="crime" />
           <Column title="Injury" dataIndex="injury" key="injury" />
+          <Column title="Action" dataIndex="action" key="action" />
         </Table>
       </div>
      
