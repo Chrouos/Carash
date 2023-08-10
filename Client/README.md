@@ -10,15 +10,6 @@ npm install # 需要先安裝 package.json 的套件，如果有了可以跳過
 npm start
 ```
 
-### 資料庫
-對應不同作業系統開啟方法不同，使用資料庫為 Mongodb
-+ MacOS: `brew services start mongodb-community@6.0`
-+ Windows: `'C:\Program Files\MongoDB\Server\6.0\bin\mongod.exe' --dbpath="d:\data\db"` (Windows 請注意路徑)
-
-安裝與開啟方法參考官網:
-+ [Install MongoDB Community Edition on macOS](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/)
-+ [Install MongoDB Community Edition on Windows](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-windows/)
-
 ### 工具版本
 
 + `node -v`: v20.3.1
@@ -52,6 +43,19 @@ npm start
 + [Ant Design](https://ant.design/)
 + React Dom 
   參考[React Router 巢狀路由](https://israynotarray.com/react/20221009/2778078774/)
+
+### 資料庫
+對應不同作業系統開啟方法不同，使用資料庫為 Mongodb
++ MacOS: `brew services start mongodb-community@6.0`
++ Windows: `'C:\Program Files\MongoDB\Server\6.0\bin\mongod.exe' --dbpath="d:\data\db"` (Windows 請注意路徑)
+
+安裝與開啟方法參考官網:
++ [Install MongoDB Community Edition on macOS](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/)
++ [Install MongoDB Community Edition on Windows](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-windows/)
+
+
+
+
 
 --------------------------------
 
