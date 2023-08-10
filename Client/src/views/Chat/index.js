@@ -1,7 +1,7 @@
 import ChatBox from './chatBox';
 import './styles.css';
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined } from '@ant-design/icons';
 import { Layout, Menu, Button, theme, Col, Row, Input, Form } from "antd";
 const { Content, Sider, Header } = Layout;
@@ -47,8 +47,20 @@ function Chat() {
     { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '請問你騎的車型是?', createTime: '2023-07-18T05:46:00' },
     { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: '普通重型機車', createTime: '2023-07-18T05:48:00' },
     { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '請問發生時間是?', createTime: '2023-07-18T05:46:00' },
-
   ]);
+
+  // -------------------- test API
+  const testChatAPI  = async () => {
+    fetch('http://192.168.191.175:8000/chat_test')
+    .then(response => response.text())
+    .then(data => console.log(data))
+    .catch(error => console.error('Error fetching data:', error));
+  };
+
+  React.useEffect(()=>{
+    testChatAPI();
+  }, []);
+
 
   // 確認輸入聊天內容
   const enterChatValue = () => {
