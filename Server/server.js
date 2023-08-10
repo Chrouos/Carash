@@ -1,12 +1,13 @@
 const os = require('os');
 const express = require('express');
-const config = require('config');
-const { Configuration, OpenAIApi } = require("openai");
+const cors = require('cors');
 
 const app = express();
 const interfaces = os.networkInterfaces();  // 檢索該機器上的所有網絡接口
 const port = 8000;
 let hostname = 'localhost';
+
+app.use(cors());
 
 // -------------------- routers list
 const chatGPT = require('./routers/chatGPTRouter')

@@ -3,9 +3,10 @@ const config = require('config');
 
 exports.getTemplate = async (req, res) => {
     // + 交通事故的敘述 -> 歸納成 Json 的格式
+    const OPENAI_API_KEY = config.get('chatGPT.key');
+    console.error("OPENAI_API_KEY:", OPENAI_API_KEY);
     
     try {
-        const OPENAI_API_KEY = config.get('chatGPT.key');
         const configuration = new Configuration({
             apiKey: OPENAI_API_KEY
         });
@@ -41,3 +42,6 @@ exports.getTemplate = async (req, res) => {
         
     }
 };
+
+
+// response.data.choices[0].message
