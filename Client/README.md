@@ -6,6 +6,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ### 啟動專案方法
 ```
+npm install # 需要先安裝 package.json 的套件，如果有了可以跳過
 npm start
 ```
 
