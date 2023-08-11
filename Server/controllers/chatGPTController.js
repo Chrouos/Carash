@@ -1,10 +1,13 @@
 const { Configuration, OpenAIApi } = require("openai");
 const config = require('config');
+const CryptoJS = require('crypto-js')
 
 exports.getTemplate = async (req, res) => {
     // + 交通事故的敘述 -> 歸納成 Json 的格式
-    const OPENAI_API_KEY = config.get('chatGPT.key');
-    console.error("OPENAI_API_KEY:", OPENAI_API_KEY);
+    // Decrypt
+    const en_OPENAI_API_KEY = config.get('chatGPT.key');
+    const OPENAI_API_KEY = CryptoJS.AES.decrypt(en_OPENAI_API_KEY, "").toString(CryptoJS.enc.Utf8)
+    console.log(`After decrypt => ${OPENAI_API_KEY}`)
     
     try {
         const configuration = new Configuration({
