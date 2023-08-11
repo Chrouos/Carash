@@ -1,7 +1,6 @@
 const os = require('os');
 const express = require('express');
 const cors = require('cors');
-const config = require('config')
 
 const app = express();
 const interfaces = os.networkInterfaces();  // 檢索該機器上的所有網絡接口
