@@ -8,6 +8,7 @@ const port = 8000;
 let hostname = 'localhost';
 
 app.use(cors());
+app.use(express.json()); // 解析 JSON 请求体
 
 // -------------------- routers list
 const chatGPT = require('./routers/chatGPTRouter')
