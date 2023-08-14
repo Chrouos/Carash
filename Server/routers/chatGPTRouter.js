@@ -4,8 +4,6 @@ const chatGPTController = require('../controllers/chatGPTController')
 const app = Router();
   
 app.post('/classified_chat', chatGPTController.getTemplate);
-app.get('/chat_test', (req, res) => {
-    res.send("Hello, this is a test to chat with API");
-});
+app.post('/chat_test', chatGPTController.chat_test);
   
 module.exports = app;

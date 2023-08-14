@@ -19,7 +19,7 @@ function Chat() {
   const [collapsed, setCollapsed] = useState(false);
   const [chatInputValue, setChatInputValue] = useState('');
   const [contentLeftSideValue,] = useState({
-    id: '1', name: '1', car: '重型機車', place: '新北市', happened: '原應注意車前狀況，隨時採取必要之安全措施，並應遵守道路交通號誌行駛，且依當時並無不能注意之情事，竟疏未注意，闖越紅燈，不慎撞擊原告林泰名騎乘車牌號碼000-000號普通重型機車之右側，至原告林泰名人車倒地'
+    // id: '1', name: '1', car: '重型機車', place: '新北市', happened: '原應注意車前狀況，隨時採取必要之安全措施，並應遵守道路交通號誌行駛，且依當時並無不能注意之情事，竟疏未注意，闖越紅燈，不慎撞擊原告林泰名騎乘車牌號碼000-000號普通重型機車之右側，至原告林泰名人車倒地'
   });
 
   // * Items
@@ -42,50 +42,52 @@ function Chat() {
 
   // ! (假資料) 需注意時間從「最舊」開始輸送
   const [chatContent, setChatContent] = useState([
-    { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '你好，請敘述您車禍過程!', createTime: '2023-07-18T05:46:00' },
-    { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: '我在新北中山路闖紅燈，不小心撞到人', createTime: '2023-07-18T05:44:00' },
-    { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '請問你騎的車型是?', createTime: '2023-07-18T05:46:00' },
-    { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: '普通重型機車', createTime: '2023-07-18T05:48:00' },
-    { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '請問發生時間是?', createTime: '2023-07-18T05:46:00' },
+    // { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '你好，請敘述您車禍過程!', createTime: '2023-07-18T05:46:00' },
+    // { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: '我在新北中山路闖紅燈，不小心撞到人', createTime: '2023-07-18T05:44:00' },
+    // { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '請問你騎的車型是?', createTime: '2023-07-18T05:46:00' },
+    // { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: '普通重型機車', createTime: '2023-07-18T05:48:00' },
+    // { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '請問發生時間是?', createTime: '2023-07-18T05:46:00' },
   ]);
 
-  // -------------------- test API
-  const testChatAPI = async () => {
-    fetch('http://localhost:3000/', {
-      moethod: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: chatInputValue
-      })
-
-    })
-      .then(response => response.json())
-      .then(data => console.log(data))
-      .catch(error => console.error('Error fetching data:', error));
-  };
-
-  React.useEffect(() => {
-    testChatAPI();
-  }, []);
-
-
   // 確認輸入聊天內容
-  const enterChatValue = () => {
-    const newChatContent = [
-      ...chatContent,
+  const enterChatValue = async () => {
+
+    setChatContent(prevContent => [...prevContent, 
       { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
-      { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: '固定回覆', createTime: '2023-07-18T05:44:00' },
-    ];
-    setChatContent(newChatContent);
+      { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: "Please wait...", createTime: '2023-07-18T05:44:00' }]
+    );
     setChatInputValue('');
+
+    const request = {
+      content: chatInputValue
+    }
+
+    fetch('http://192.168.191.175:8000/classified_chat', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify(request)
+    })
+    .then(response => response.text())
+    .then((data) => {
+
+      setChatContent(prevContent => {
+        // 複製前面的所有資料，除了最後一筆
+        const newContent = prevContent.slice(0, prevContent.length - 1);
+        // 將修改後的資料追加到新陣列中
+        newContent.push({ userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: data, createTime: '2023-07-18T05:44:00' });
+        return newContent;
+      });
+
+      
+    })
+    .catch(error => console.error('Error fetching data:', error));
+    
   }
 
   // 一次輸出聊天紀錄
   const RenderChatBoxes = () => {
     const renderList = [];
-
+  
     chatContent.map((item, index) => {
       return renderList.push(
         <ChatBox
@@ -98,14 +100,15 @@ function Chat() {
         />
       );
     });
-
+  
     return renderList;
   };
 
 
-  React.useEffect(() => {
+  React.useEffect(()=>{
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-  }, [chatInputValue]);
+    RenderChatBoxes();
+  }, [chatContent]);
 
 
   return (
@@ -195,8 +198,8 @@ function Chat() {
                   <div style={{ margin: '10px 0px' }}>
                     <Row justify="space-evenly">
                       <Col span={22} >
-                        <Input
-                          placeholder='Please Enter Somting... '
+                        <TextArea
+                          placeholder='請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... '
                           value={chatInputValue}
                           onChange={(e) => setChatInputValue(e.target.value)}
                           onPressEnter={enterChatValue} />

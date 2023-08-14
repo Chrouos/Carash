@@ -144,3 +144,47 @@ exports.getTemplate = async (req, res) => {
 
 
 // response.data.choices[0].message
+exports.chat_test = async (req, res) => {
+    // + 與前端的聊天測試
+    
+    try {
+        const requestData = req.body; // Data from the request.
+        console.log("🚀 ~ file: chatGPTController.js:71 ~ exports.chat_test= ~ requestData:", requestData)
+        
+        const messageList = [{
+            "role": "user",
+            "content": requestData.content
+        }]
+
+        // Decrypt
+        const en_OPENAI_API_KEY = config.get('chatGPT.key');
+        const OPENAI_API_KEY = CryptoJS.AES.decrypt(en_OPENAI_API_KEY, "").toString(CryptoJS.enc.Utf8)
+        console.log(`After decrypt => ${OPENAI_API_KEY}`)
+
+        const configuration = new Configuration({
+            apiKey: OPENAI_API_KEY
+        });
+
+        const openai = new OpenAIApi(configuration);
+
+        // ! 產生可能會需要一點時間
+        const response = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: messageList,
+            temperature: 0.1,
+            max_tokens: 1024,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0
+        });
+
+        console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ response.data.choices[0].message:\n", response.data.choices[0].message)
+        res.status(200).send(response.data.choices[0].message.content);
+        
+    } catch (error) {
+        console.error("Error fetching from OpenAI:", error.message || error);
+        res.status(500).send(`Error fetching from OpenAI: ${error.message || error}`);
+        
+    }
+};
+
