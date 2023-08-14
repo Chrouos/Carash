@@ -18,10 +18,10 @@ function Chat() {
   // * State
   const [collapsed, setCollapsed] = useState(false);
   const [chatInputValue, setChatInputValue] = useState('');
-  const [contentLeftSideValue, ] = useState({
+  const [contentLeftSideValue,] = useState({
     id: '1', name: '1', car: '重型機車', place: '新北市', happened: '原應注意車前狀況，隨時採取必要之安全措施，並應遵守道路交通號誌行駛，且依當時並無不能注意之情事，竟疏未注意，闖越紅燈，不慎撞擊原告林泰名騎乘車牌號碼000-000號普通重型機車之右側，至原告林泰名人車倒地'
   });
-  
+
   // * Items
   const {
     token: { colorBgContainer },
@@ -38,7 +38,7 @@ function Chat() {
         // children: {key, label}
       }
     }
-  )
+    )
 
   // ! (假資料) 需注意時間從「最舊」開始輸送
   const [chatContent, setChatContent] = useState([
@@ -50,14 +50,23 @@ function Chat() {
   ]);
 
   // -------------------- test API
-  const testChatAPI  = async () => {
-    fetch('http://192.168.191.175:8000/chat_test')
-    .then(response => response.text())
-    .then(data => console.log(data))
-    .catch(error => console.error('Error fetching data:', error));
+  const testChatAPI = async () => {
+    fetch('http://localhost:3000/', {
+      moethod: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: chatInputValue
+      })
+
+    })
+      .then(response => response.json())
+      .then(data => console.log(data))
+      .catch(error => console.error('Error fetching data:', error));
   };
 
-  React.useEffect(()=>{
+  React.useEffect(() => {
     testChatAPI();
   }, []);
 
@@ -76,7 +85,7 @@ function Chat() {
   // 一次輸出聊天紀錄
   const RenderChatBoxes = () => {
     const renderList = [];
-  
+
     chatContent.map((item, index) => {
       return renderList.push(
         <ChatBox
@@ -89,15 +98,15 @@ function Chat() {
         />
       );
     });
-  
+
     return renderList;
   };
 
 
-  React.useEffect(()=>{
+  React.useEffect(() => {
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
   }, [chatInputValue]);
-  
+
 
   return (
 
@@ -105,7 +114,7 @@ function Chat() {
       <Layout style={{ padding: "24px 0 0 0", height: '100%' }}>
 
         {/* Left sider */}
-        <Sider width={200} collapsed={collapsed} style={{ background: colorBgContainer, overflow: 'auto', height: '100%'  }}>
+        <Sider width={200} collapsed={collapsed} style={{ background: colorBgContainer, overflow: 'auto', height: '100%' }}>
           <Menu
             mode="inline"
             items={contentSiderName}
@@ -115,7 +124,7 @@ function Chat() {
 
         {/* Right Content */}
         <Content style={{ padding: '0 24px', minHeight: 280 }}>
-          
+
           <Header style={{ padding: 0, background: colorBgContainer }}>
             <Button
               type="text"
@@ -129,53 +138,53 @@ function Chat() {
             />
 
 
-           
+
           </Header>
 
-          
+
           <div style={{ padding: '24px 0 0 0', marginTop: 8, height: '90%' }}>
             <Row gutter={[16, 8]} justify="space-evenly" style={{ height: '100%' }}>
 
               {/* 左邊: 案件資訊 */}
-              <Col span={contentLeftSide}  className="code-box" style={{overflow: 'auto'}} > 
-                <div style={{padding: '20px 10px 5px 10px'}}>
-                  <Form  form={caseDetailForm} layout="vertical" >
+              <Col span={contentLeftSide} className="code-box" style={{ overflow: 'auto' }} >
+                <div style={{ padding: '20px 10px 5px 10px' }}>
+                  <Form form={caseDetailForm} layout="vertical" >
                     <Form.Item label='提問者名稱' >
-                      <Input 
-                        id="name" name="name" placeholder='Please enter your name.' disabled  
-                        value={contentLeftSideValue.name}/>
+                      <Input
+                        id="name" name="name" placeholder='Please enter your name.' disabled
+                        value={contentLeftSideValue.name} />
                     </Form.Item>
                     <Form.Item label='事發地點' >
-                      <Input 
-                        id="place" name="place" placeholder='Where did the accident happen.'disabled
+                      <Input
+                        id="place" name="place" placeholder='Where did the accident happen.' disabled
                         value={contentLeftSideValue.place} />
                     </Form.Item>
                     <Form.Item label='事發時間' >
-                      <Input id="time" name="time" placeholder='............'disabled
-                      value={contentLeftSideValue.time} />
+                      <Input id="time" name="time" placeholder='............' disabled
+                        value={contentLeftSideValue.time} />
                     </Form.Item>
                     <Form.Item label='車型' >
-                      <Input id="car" name="car" placeholder='..........'disabled
-                      value={contentLeftSideValue.car} />
+                      <Input id="car" name="car" placeholder='..........' disabled
+                        value={contentLeftSideValue.car} />
                     </Form.Item>
                     <Form.Item label='傷勢' >
-                      <Input id="injury" name="injury" placeholder='..........'disabled
-                      value={contentLeftSideValue.injury} />
+                      <Input id="injury" name="injury" placeholder='..........' disabled
+                        value={contentLeftSideValue.injury} />
                     </Form.Item>
                     <Form.Item label='發生經過' >
-                      <TextArea id="happened" name="happened" placeholder='..........'disabled
-                      value={contentLeftSideValue.happened} />
+                      <TextArea id="happened" name="happened" placeholder='..........' disabled
+                        value={contentLeftSideValue.happened} />
                     </Form.Item>
                     <Form.Item label='可能賠償金額' >
-                      <Input id="amount" name="amount" placeholder='Forecast the amount of possible compensation.'disabled
-                      value={contentLeftSideValue.amount} />
+                      <Input id="amount" name="amount" placeholder='Forecast the amount of possible compensation.' disabled
+                        value={contentLeftSideValue.amount} />
                     </Form.Item>
 
-                    <div style={{textAlign: 'center'}}>
+                    <div style={{ textAlign: 'center' }}>
                       <Button icon={<EnterOutlined />} > 確認輸出內容 </Button>
                     </div>
                   </Form>
-                </div> 
+                </div>
               </Col>
 
               {/* 右邊: 對話框，由下到上排列  */}
@@ -199,7 +208,7 @@ function Chat() {
                   </div>
 
                   {/* 上半部分: 對話紀錄 */}
-                  <div style={{overflow: 'auto'}} ref={chatContainerRef}> <RenderChatBoxes /> </div>
+                  <div style={{ overflow: 'auto' }} ref={chatContainerRef}> <RenderChatBoxes /> </div>
 
                 </div>
               </Col>
