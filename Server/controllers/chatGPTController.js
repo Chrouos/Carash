@@ -3,6 +3,15 @@ const config = require('config');
 const CryptoJS = require('crypto-js')
 
 var chatRecordTimes = 0;
+var questionMessage = [{
+    "role": "",
+    "content": ""
+}]
+var answerMessage = [{
+    "role": "",
+    "content": ""
+}]
+
 const lawJson = {
     "發生日期": "",
     "發生時間": "",
@@ -22,13 +31,14 @@ const lawJson = {
     "被告傷勢": "",
     "原告傷勢": ""
 }
-const myJson = lawJson;
+var myJson = lawJson;
 
 exports.getTemplate = async (req, res) => {
     // + 交通事故的敘述 -> 歸納成 Json 的格式
 
 
     try {
+
         const requestData = req.body; // Data from the request.
         console.log("🚀 ~ file: chatGPTController.js:11 ~ exports.getTemplate= ~ requestData:", requestData)
         chatRecordTimes += 1;
@@ -66,6 +76,7 @@ exports.getTemplate = async (req, res) => {
             });
 
             const jsonResponseData = JSON.parse(firstResponse.data.choices[0].message.content);
+            console.log("jasonResponseData is :", jsonResponseData);
 
             for (const key in jsonResponseData) {
                 if (jsonResponseData.hasOwnProperty(key)) {
@@ -73,24 +84,50 @@ exports.getTemplate = async (req, res) => {
                 }
             }
 
-            console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ response.data.choices[0].message:\n", firstResponse.data.choices[0].message)
+            console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ firstResponse.data.choices[0].message:\n", firstResponse.data.choices[0].message)
+
+        }
+        else {
+
+            answerMessage.push({ "role": "user", "content": requestData.content });
+
+            const jsonResponse = await openai.createChatCompletion({
+                model: "gpt-3.5-turbo",
+                messages: answerMessage,
+                temperature: 0.1,
+                max_tokens: 1024,
+                top_p: 1,
+                frequency_penalty: 0,
+                presence_penalty: 0
+            });
+
+            const jsonResponseData = JSON.parse(jsonResponse.data.choices[0].message.content);
+            console.log("jasonResponseData is :", jsonResponseData);
+
+            for (const key in jsonResponseData) {
+                if (jsonResponseData.hasOwnProperty(key)) {
+                    myJson[key] = jsonResponseData[key];
+                }
+            }
+
+            console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ jsonResponse.data.choices[0].message:\n", jsonResponse.data.choices[0].message)
 
         }
 
 
-        for (const key of myJson) {
+        for (const key in myJson) {
             if (myJson.hasOwnProperty(key)) {
-                if (myJson[key].trims().length === 0) {
+                if (myJson[key].trim().length === 0) {
 
                     console.log(`"${key}"的值為空`);
 
-                    const questionMessage = [{
+                    questionMessage = [{
                         "role": "system",
-                        "content": `你現在是一個交通事故諮詢的機器人，請產生一個詢問"${myJson[key]}"的提問`
+                        "content": `你現在是一個交通事故諮詢的機器人，請產生一個詢問"${key}"的提問`
                     }]
-                    const answerMessage = [{
+                    answerMessage = [{
                         "role": "system",
-                        "content": `現在有一個關於"${myJson[key]}"的描述，若使用者回覆不知道或忘記請填入"未知"請依照以下json 格式回覆：{“${myJson[key]}”：}`
+                        "content": `現在有一個關於"${key}"的描述，若使用者回覆不知道或忘記請填入"未知"請依照以下json 格式回覆：{“${key}”：}`
                     }]
 
                     break;
@@ -103,6 +140,9 @@ exports.getTemplate = async (req, res) => {
             }
         }
 
+        console.log("questionMessage is : ", questionMessage);
+        console.log("questionMessage is : ", answerMessage);
+
 
         const questionResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo",
@@ -114,24 +154,9 @@ exports.getTemplate = async (req, res) => {
             presence_penalty: 0
         });
 
-        answerMessage.push({ "role": "user", "content": requestData.content });
-
-        const jsonResponse = await openai.createChatCompletion({
-            model: "gpt-3.5-turbo",
-            messages: answerMessage,
-            temperature: 0.1,
-            max_tokens: 1024,
-            top_p: 1,
-            frequency_penalty: 0,
-            presence_penalty: 0
-        });
-
-        myJson = jsonResponse;
-
         const gptResponse = questionResponse.data.choices[0].message;
 
-        console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ response.data.choices[0].message:\n", gptResponse)
-
+        console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ questionResponse.data.choices[0].message:\n", questionResponse.data.choices[0].message)
         res.status(200).send(gptResponse.content);
 
 
@@ -146,11 +171,11 @@ exports.getTemplate = async (req, res) => {
 // response.data.choices[0].message
 exports.chat_test = async (req, res) => {
     // + 與前端的聊天測試
-    
+
     try {
         const requestData = req.body; // Data from the request.
         console.log("🚀 ~ file: chatGPTController.js:71 ~ exports.chat_test= ~ requestData:", requestData)
-        
+
         const messageList = [{
             "role": "user",
             "content": requestData.content
@@ -180,11 +205,11 @@ exports.chat_test = async (req, res) => {
 
         console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ response.data.choices[0].message:\n", response.data.choices[0].message)
         res.status(200).send(response.data.choices[0].message.content);
-        
+
     } catch (error) {
         console.error("Error fetching from OpenAI:", error.message || error);
         res.status(500).send(`Error fetching from OpenAI: ${error.message || error}`);
-        
+
     }
 };
 
