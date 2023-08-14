@@ -15,7 +15,6 @@ npm start
 + `node -v`: v20.3.1
 + `npm -v`: 9.6.7
 + `create-react-app --version`: 5.0.1
-+ `mongod -version`: v6.0.8
 + 其餘詳情請看 `package.json`
 
 #### 錯誤排查
