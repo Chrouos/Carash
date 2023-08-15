@@ -10,13 +10,6 @@ npm install # 需要先安裝 package.json 的套件，如果有了可以跳過
 npm start
 ```
 
-### 工具版本
-
-+ `node -v`: v20.3.1
-+ `npm -v`: 9.6.7
-+ `create-react-app --version`: 5.0.1
-+ 其餘詳情請看 `package.json`
-
 #### 錯誤排查
 
 > 如果 npm start 啟動出現下列錯誤   
