@@ -1,6 +1,6 @@
 const { Configuration, OpenAIApi } = require("openai");
-const config = require('config');
 const CryptoJS = require('crypto-js')
+const defaultConfig = require('../config/development');    // * Config 檔案
 
 var chatRecordTimes = 0;
 var questionMessage = [{
@@ -36,7 +36,6 @@ var myJson = lawJson;
 exports.getTemplate = async (req, res) => {
     // + 交通事故的敘述 -> 歸納成 Json 的格式
 
-
     try {
 
         const requestData = req.body; // Data from the request.
@@ -44,7 +43,7 @@ exports.getTemplate = async (req, res) => {
         chatRecordTimes += 1;
 
         // Decrypt
-        const en_OPENAI_API_KEY = config.get('chatGPT.key');
+        const en_OPENAI_API_KEY = defaultConfig.GPT_KEY;
         const OPENAI_API_KEY = CryptoJS.AES.decrypt(en_OPENAI_API_KEY, "").toString(CryptoJS.enc.Utf8)
         console.log(`After decrypt => ${OPENAI_API_KEY}`)
 
@@ -155,8 +154,8 @@ exports.getTemplate = async (req, res) => {
         });
 
         const gptResponse = questionResponse.data.choices[0].message;
-
-        console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ questionResponse.data.choices[0].message:\n", gptResponse)
+        
+        console.log("🚀 ~ file: chatGPTController.js:158 ~ exports.getTemplate= ~ gptResponse:", gptResponse)
         res.status(200).send(gptResponse.content);
 
 
@@ -213,3 +212,10 @@ exports.chat_test = async (req, res) => {
     }
 };
 
+
+/*
+
+108年4月30日，大概早上十點多的時候，我騎重機在中山路附近行駛。
+有台車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。
+
+*/

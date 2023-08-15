@@ -1,4 +1,4 @@
-import "./App.css";
+import "./css/App.css";
 
 import HeaderComponent from "./components/Header";
 import FooterComponent from "./components/Footer";
@@ -10,6 +10,7 @@ import React from "react";
 import { Layout } from "antd";
 import { Route, Routes } from "react-router-dom";
 
+import axios from './utils/axios';
 
 function App() {
 

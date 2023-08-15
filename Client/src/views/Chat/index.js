@@ -7,6 +7,9 @@ import { Layout, Menu, Button, theme, Col, Row, Input, Form } from "antd";
 const { Content, Sider, Header } = Layout;
 const { TextArea } = Input;
 
+import axios from '../../utils/axios';
+import authHeader from '../../store/auth-header';
+
 
 function Chat() {
 
@@ -58,25 +61,24 @@ function Chat() {
       content: chatInputValue
     }
 
-    fetch('http://192.168.191.175:8000/classified_chat', {
-      method: 'POST', 
-      headers: {'Content-Type': 'application/json'}, 
-      body: JSON.stringify(request)
-    })
-    .then(response => response.text())
-    .then((data) => {
+    await axios
+      .post('/chatGPT/classified_chat', request, {
+          headers: authHeader(),
+      })
+      .then(response => {
 
-      setChatContent(prevContent => {
-        // 複製前面的所有資料，除了最後一筆
-        const newContent = prevContent.slice(0, prevContent.length - 1);
-        // 將修改後的資料追加到新陣列中
-        newContent.push({ userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: data, createTime: '2023-07-18T05:44:00' });
-        return newContent;
-      });
+        const gptResponse = response.data;
+     
+        setChatContent(prevContent => {
+          // 複製前面的所有資料，除了最後一筆
+          const newContent = prevContent.slice(0, prevContent.length - 1);
 
-      
-    })
-    .catch(error => console.error('Error fetching data:', error));
+          // 將修改後的資料追加到新陣列中
+          newContent.push({ userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: gptResponse, createTime: '2023-07-18T05:44:00' });
+          return newContent;
+        });
+      })
+      .catch(error => console.error('Error fetching data:', error));
   }
 
   // 一次輸出聊天紀錄
