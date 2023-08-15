@@ -156,7 +156,7 @@ exports.getTemplate = async (req, res) => {
 
         const gptResponse = questionResponse.data.choices[0].message;
 
-        console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ questionResponse.data.choices[0].message:\n", questionResponse.data.choices[0].message)
+        console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ questionResponse.data.choices[0].message:\n", gptResponse)
         res.status(200).send(gptResponse.content);
 
 

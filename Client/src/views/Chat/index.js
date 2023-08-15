@@ -2,7 +2,7 @@ import ChatBox from './chatBox';
 import './styles.css';
 
 import React, { useEffect, useState } from "react";
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined } from '@ant-design/icons';
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined   } from '@ant-design/icons';
 import { Layout, Menu, Button, theme, Col, Row, Input, Form } from "antd";
 const { Content, Sider, Header } = Layout;
 const { TextArea } = Input;
@@ -28,8 +28,7 @@ function Chat() {
   } = theme.useToken();
 
   // ! 到時候刪除(假資料)
-  const contentSiderName = ['ChatBot1', 'ChatBot2', 'ChatBot3', 'ChatBot4', 'ChatBot5', 'ChatBot6'
-    , 'ChatBot6', 'ChatBot6', 'ChatBot6', 'ChatBot6', 'ChatBot6', 'ChatBot6', 'ChatBot6', 'ChatBot6', 'ChatBot6'].map((name, index) => {
+  const contentSiderName = [].map((name, index) => {
       const key = String(index + 1);
       return {
         key,
@@ -43,10 +42,7 @@ function Chat() {
   // ! (假資料) 需注意時間從「最舊」開始輸送
   const [chatContent, setChatContent] = useState([
     // { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '你好，請敘述您車禍過程!', createTime: '2023-07-18T05:46:00' },
-    // { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: '我在新北中山路闖紅燈，不小心撞到人', createTime: '2023-07-18T05:44:00' },
-    // { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '請問你騎的車型是?', createTime: '2023-07-18T05:46:00' },
-    // { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: '普通重型機車', createTime: '2023-07-18T05:48:00' },
-    // { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '請問發生時間是?', createTime: '2023-07-18T05:46:00' },
+    { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },
   ]);
 
   // 確認輸入聊天內容
@@ -54,7 +50,7 @@ function Chat() {
 
     setChatContent(prevContent => [...prevContent, 
       { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
-      { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: "Please wait...", createTime: '2023-07-18T05:44:00' }]
+      { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
     );
     setChatInputValue('');
 
@@ -81,7 +77,6 @@ function Chat() {
       
     })
     .catch(error => console.error('Error fetching data:', error));
-    
   }
 
   // 一次輸出聊天紀錄
@@ -139,9 +134,6 @@ function Chat() {
                 height: 64,
               }}
             />
-
-
-
           </Header>
 
 
@@ -199,13 +191,13 @@ function Chat() {
                     <Row justify="space-evenly">
                       <Col span={22} >
                         <TextArea
-                          placeholder='請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... '
+                          placeholder='Please Write Here.'
                           value={chatInputValue}
                           onChange={(e) => setChatInputValue(e.target.value)}
                           onPressEnter={enterChatValue} />
                       </Col>
                       <Col span={1} >
-                        <Button icon={<EnterOutlined />} onClick={enterChatValue} ></Button>
+                        <Button icon={<EnterOutlined />} style={{height: '100%'}} onClick={enterChatValue} ></Button>
                       </Col>
                     </Row>
                   </div>
