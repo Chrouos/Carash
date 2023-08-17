@@ -1,6 +1,6 @@
 const { Configuration, OpenAIApi } = require("openai");
 const CryptoJS = require('crypto-js')
-const defaultConfig = require('../config/development');    // * Config 檔案
+const ConfigCrypto = require('../tools/ConfigCrypto')
 
 var chatRecordTimes = 0;
 
@@ -15,8 +15,8 @@ exports.getTemplate = async (req, res) => {
         chatRecordTimes += 1;
 
         // Decrypt
-        const en_OPENAI_API_KEY = defaultConfig.GPT_KEY;
-        const OPENAI_API_KEY = CryptoJS.AES.decrypt(en_OPENAI_API_KEY, "").toString(CryptoJS.enc.Utf8)
+        const configCrypto = new ConfigCrypto();
+        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
         console.log(`After decrypt => ${OPENAI_API_KEY}`)
 
         const configuration = new Configuration({
@@ -154,9 +154,114 @@ exports.chat_test = async (req, res) => {
 };
 
 
+exports.templateJSON = async (req, res) => {
+
+    try {
+
+        // - 獲得 OpenAI API
+        const configCrypto = new ConfigCrypto();
+        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
+        const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
+
+        // - 回傳資訊
+        var responseData = req.body;
+
+        // - 整理 request data
+        const requestData = req.body;   // Get data from the request.
+        const notNullCount = Object.values(responseData.incidentJson).filter(value => value !== "").length; // 目前不是 Null 的值
+
+        // - 目前還未有任何資訊: 第一次對話
+        if (notNullCount == 0){
+
+            const firstMessages = [
+                {"role": "system","content": "你現在是一件交通諮詢的專家，現在有一件交通事故的敘述，請你將資訊歸納成如下的json格式，如果沒有資料請保持欄位空白，歸納的資訊請說明成類判決書格式。我 = 原告，對方 = 被告" + JSON.stringify(requestData.incidentJson)},
+                {"role": "user", "content": requestData.content }
+            ]
+
+            const gptResponse = await openai.createChatCompletion({
+                model: "gpt-3.5-turbo",
+                messages: firstMessages,
+                temperature: 0.1,
+                max_tokens: 1024,
+                top_p: 1,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+            });
+
+            // 回傳的有可能不是 JSON
+            try {
+                responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
+                // Handle the error or return
+            }
+            
+        }
+        
+        // - 已經有部分資訊了: 詢問還未知曉的資訊 (GPT - 1)
+        else{
+
+            const tidyMessage = [
+                {"role": "system","content": "現在有一個回答，是針對以下json格式的第一個沒有值的key，請依照此Json格式填入納格沒有值的key中，並且回覆整個Json格式，若使用者回覆不知道或忘記了請填入'未知'。請不要填入不相關的key中。" + JSON.stringify(requestData.incidentJson)},
+                {"role": "user", "content": requestData.content } // 把目前車禍相關的 JSON 與 使用者回覆串接
+            ]
+            console.log("🚀 ~ file: chatGPTController.js:202 ~ exports.templateJSON= ~ tidyMessage:", tidyMessage)
+
+            const gptResponse = await openai.createChatCompletion({
+                model: "gpt-3.5-turbo",
+                messages: tidyMessage,
+                temperature: 0.1,
+                max_tokens: 1024,
+                top_p: 1,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+            });
+
+            // 回傳的有可能不是 JSON
+            try {
+                responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
+                // Handle the error or return
+            }
+            
+            
+        }
+
+        // - 最後 GPT 的回覆格式
+        const questionMessage = [ 
+            {"role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中第一個沒有值的key，產生一個詢問此key的問題。"},
+            {"role": "user", "content": JSON.stringify(requestData.incidentJson)}
+        ]
+        console.log("🚀 ~ file: chatGPTController.js:223 ~ exports.templateJSON= ~ questionMessage:", questionMessage)
+
+        const gptResponse = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: questionMessage,
+            temperature: 0.1,
+            max_tokens: 1024,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+        });
+
+        responseData.content = gptResponse.data.choices[0].message.content;
+        res.status(200).send(responseData);
+
+    } catch (error) {
+        console.error("[templateJSON] Error fetching from OpenAI:", error.message || error);
+        res.status(500).send(`[templateJSON] Error fetching from OpenAI: ${error.message || error}`);
+    }
+};
+
+
 /*
 
+1:
 108年4月30日，大概早上十點多的時候，我騎重機在中山路附近行駛。
-有台車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。
+有台轎車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。
+
+2:
+我從北投區出發，那天氣晴，路況正常，我當時行駛車速大約50公里，我的車後燈損壞及車身有些擦傷
 
 */

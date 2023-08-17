@@ -10,39 +10,33 @@ const { TextArea } = Input;
 import axios from '../../utils/axios';
 import authHeader from '../../store/auth-header';
 
-var myJson = {
-  "發生日期": "",
-  "發生時間": "",
-  "發生地點": "",
-  "被告駕駛交通工具": "",
-  "原告駕駛交通工具": "",
-  "出發地": "",
-  "行駛道路": "",
-  "行進方向": "",
-  "事發經過": "",
-  "行進方向的號誌": "",
-  "天候": "",
-  "路況": "",
-  "行車速度": "",
-  "被告車輛損壞情形": "",
-  "原告車輛損壞情形": "",
-  "被告傷勢": "",
-  "原告傷勢": ""
-}
-
-
 function Chat() {
 
   // * Settings
   const contentLeftSide = 9, contentRightSide = 23 - contentLeftSide;
   const chatContainerRef = React.useRef(null);
   const [caseDetailForm] = Form.useForm();
+  const [enterStatus, setEnterStatus] = useState(true);
 
   // * State
   const [collapsed, setCollapsed] = useState(false);
   const [chatInputValue, setChatInputValue] = useState('');
-  const [contentLeftSideValue,] = useState({
-    // id: '1', name: '1', car: '重型機車', place: '新北市', happened: '原應注意車前狀況，隨時採取必要之安全措施，並應遵守道路交通號誌行駛，且依當時並無不能注意之情事，竟疏未注意，闖越紅燈，不慎撞擊原告林泰名騎乘車牌號碼000-000號普通重型機車之右側，至原告林泰名人車倒地'
+  const [contentLeftSiderValue, setContentLeftSiderValue] = useState({
+    "事故發生日期": "",
+    "事故發生時間": "",
+    "事故發生地點": "",
+    "被告駕駛交通工具": "",
+    "原告駕駛交通工具": "",
+    "行駛道路": "",
+    "事發經過": "",
+    "行進方向的號誌": "",
+    "天候": "",
+    "路況": "",
+    "行車速度": "",
+    "被告車輛損壞情形": "",
+    "原告車輛損壞情形": "",
+    "被告傷勢": "",
+    "原告傷勢": ""
   });
 
   // * Items
@@ -51,63 +45,60 @@ function Chat() {
   } = theme.useToken();
 
   // ! 到時候刪除(假資料)
-  const contentSiderName = [].map((name, index) => {
+  const contentSiderName = ["chatBox1"].map((name, index) => {
     const key = String(index + 1);
     return {
       key,
       label: name,
       icon: <UserOutlined />,
-      // children: {key, label}
     }
-  }
-  )
+  })
 
   // ! (假資料) 需注意時間從「最舊」開始輸送
   const [chatContent, setChatContent] = useState([
-    // { userId: 'bot1Chat', snId: 'chat000001', character: 'chatBot', value: '你好，請敘述您車禍過程!', createTime: '2023-07-18T05:46:00' },
-    { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },
+    { userId: '1', snId: '1', character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },
   ]);
 
   // 確認輸入聊天內容
   const enterChatValue = async () => {
 
-    setChatContent(prevContent => [...prevContent,
-    { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
-    { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
-    );
-    setChatInputValue('');
+    if ( enterStatus == false ){ return ;}
 
-    const request = [{
-      "role": "user",
-      "content": chatInputValue
-    }]
-    request.push({ "role": "system", "content": JSON.stringify(myJson) });
-    console.log("request : ", request);
+    setChatContent(prevContent => [...prevContent,
+      { userId: '1', snId: '1', character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
+      { userId: '1', snId: '1', character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
+    );
+    setChatInputValue(null);
+
+    const request = {
+      "content": chatInputValue,
+      "incidentJson": contentLeftSiderValue
+    }
+    setEnterStatus(false);
 
     await axios
-      .post('/chatGPT/classified_chat', request, {
+      .post('/chatGPT/templateJSON', request, {
         headers: authHeader(),
       })
       .then(response => {
+        console.log("🚀 ~ file: index.js:82 ~ enterChatValue ~ response:", response)
 
-        console.log("response : ", response);
-        const gptResponse = response[0].content;
-        const myJsonResponse = response[1].content;
-
-        for (const key in myJsonResponse) {
-          if (myJsonResponse.hasOwnProperty(key)) {
-            myJson[key] = myJsonResponse[key];
-          }
-        }
-
+        // - 對話紀錄的更改
+        const responseContent = response.data.content;
         setChatContent(prevContent => {
-          // 複製前面的所有資料，除了最後一筆
-          const newContent = prevContent.slice(0, prevContent.length - 1);
+          const newContent = prevContent.slice(0, prevContent.length - 1);  // 複製前面的所有資料，除了最後一筆
 
           // 將修改後的資料追加到新陣列中
-          newContent.push({ userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: gptResponse, createTime: '2023-07-18T05:44:00' });
+          newContent.push({ userId: '1', snId: '1', character: 'chatBot', value: responseContent, createTime: '2023-07-18T05:44:00' });
           return newContent;
         });
+
+        // - JSON 紀錄的修改
+        const myJsonResponse = response.data.incidentJson;
+        setContentLeftSiderValue(myJsonResponse);
+
+        setEnterStatus(true);
+        
       })
       .catch(error => console.error('Error fetching data:', error));
   }
@@ -130,6 +121,14 @@ function Chat() {
     });
 
     return renderList;
+  };
+
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        enterChatValue();
+    }
   };
 
 
@@ -177,7 +176,7 @@ function Chat() {
               <Col span={contentLeftSide} className="code-box" style={{ overflow: 'auto' }} >
                 <div style={{ padding: '20px 10px 5px 10px' }}>
                   <Form form={caseDetailForm} layout="vertical" >
-                    <Form.Item label='提問者名稱' >
+                    {/* <Form.Item label='提問者名稱' >
                       <Input
                         id="name" name="name" placeholder='Please enter your name.' disabled
                         value={contentLeftSideValue.name} />
@@ -206,7 +205,7 @@ function Chat() {
                     <Form.Item label='可能賠償金額' >
                       <Input id="amount" name="amount" placeholder='Forecast the amount of possible compensation.' disabled
                         value={contentLeftSideValue.amount} />
-                    </Form.Item>
+                    </Form.Item> */}
 
                     <div style={{ textAlign: 'center' }}>
                       <Button icon={<EnterOutlined />} > 確認輸出內容 </Button>
@@ -227,7 +226,7 @@ function Chat() {
                           placeholder='Please Write Here.'
                           value={chatInputValue}
                           onChange={(e) => setChatInputValue(e.target.value)}
-                          onPressEnter={enterChatValue} />
+                          onKeyDown={handleKeyDown}/>
                       </Col>
                       <Col span={1} >
                         <Button icon={<EnterOutlined />} style={{ height: '100%' }} onClick={enterChatValue} ></Button>
