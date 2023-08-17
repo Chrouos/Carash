@@ -2,13 +2,33 @@ import ChatBox from './chatBox';
 import './styles.css';
 
 import React, { useEffect, useState } from "react";
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined   } from '@ant-design/icons';
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Layout, Menu, Button, theme, Col, Row, Input, Form } from "antd";
 const { Content, Sider, Header } = Layout;
 const { TextArea } = Input;
 
 import axios from '../../utils/axios';
 import authHeader from '../../store/auth-header';
+
+var myJson = {
+  "發生日期": "",
+  "發生時間": "",
+  "發生地點": "",
+  "被告駕駛交通工具": "",
+  "原告駕駛交通工具": "",
+  "出發地": "",
+  "行駛道路": "",
+  "行進方向": "",
+  "事發經過": "",
+  "行進方向的號誌": "",
+  "天候": "",
+  "路況": "",
+  "行車速度": "",
+  "被告車輛損壞情形": "",
+  "原告車輛損壞情形": "",
+  "被告傷勢": "",
+  "原告傷勢": ""
+}
 
 
 function Chat() {
@@ -32,15 +52,15 @@ function Chat() {
 
   // ! 到時候刪除(假資料)
   const contentSiderName = [].map((name, index) => {
-      const key = String(index + 1);
-      return {
-        key,
-        label: name,
-        icon: <UserOutlined />,
-        // children: {key, label}
-      }
+    const key = String(index + 1);
+    return {
+      key,
+      label: name,
+      icon: <UserOutlined />,
+      // children: {key, label}
     }
-    )
+  }
+  )
 
   // ! (假資料) 需注意時間從「最舊」開始輸送
   const [chatContent, setChatContent] = useState([
@@ -51,24 +71,35 @@ function Chat() {
   // 確認輸入聊天內容
   const enterChatValue = async () => {
 
-    setChatContent(prevContent => [...prevContent, 
-      { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
-      { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
+    setChatContent(prevContent => [...prevContent,
+    { userId: 'fakeUser12345', snId: 'chat000001', character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
+    { userId: 'fakeUser12345', snId: 'chat000001', character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
     );
     setChatInputValue('');
 
-    const request = {
-      content: chatInputValue
-    }
+    const request = [{
+      "role": "user",
+      "content": chatInputValue
+    }]
+    request.push({ "role": "system", "content": JSON.stringify(myJson) });
+    console.log("request : ", request);
 
     await axios
       .post('/chatGPT/classified_chat', request, {
-          headers: authHeader(),
+        headers: authHeader(),
       })
       .then(response => {
 
-        const gptResponse = response.data;
-     
+        console.log("response : ", response);
+        const gptResponse = response[0].content;
+        const myJsonResponse = response[1].content;
+
+        for (const key in myJsonResponse) {
+          if (myJsonResponse.hasOwnProperty(key)) {
+            myJson[key] = myJsonResponse[key];
+          }
+        }
+
         setChatContent(prevContent => {
           // 複製前面的所有資料，除了最後一筆
           const newContent = prevContent.slice(0, prevContent.length - 1);
@@ -84,7 +115,7 @@ function Chat() {
   // 一次輸出聊天紀錄
   const RenderChatBoxes = () => {
     const renderList = [];
-  
+
     chatContent.map((item, index) => {
       return renderList.push(
         <ChatBox
@@ -97,12 +128,12 @@ function Chat() {
         />
       );
     });
-  
+
     return renderList;
   };
 
 
-  React.useEffect(()=>{
+  React.useEffect(() => {
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     RenderChatBoxes();
   }, [chatContent]);
@@ -199,7 +230,7 @@ function Chat() {
                           onPressEnter={enterChatValue} />
                       </Col>
                       <Col span={1} >
-                        <Button icon={<EnterOutlined />} style={{height: '100%'}} onClick={enterChatValue} ></Button>
+                        <Button icon={<EnterOutlined />} style={{ height: '100%' }} onClick={enterChatValue} ></Button>
                       </Col>
                     </Row>
                   </div>
