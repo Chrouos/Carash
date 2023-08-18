@@ -171,11 +171,11 @@ exports.templateJSON = async (req, res) => {
         const notNullCount = Object.values(responseData.incidentJson).filter(value => value !== "").length; // 目前不是 Null 的值
 
         // - 目前還未有任何資訊: 第一次對話
-        if (notNullCount == 0){
+        if (notNullCount == 0) {
 
             const firstMessages = [
-                {"role": "system","content": "你現在是一件交通諮詢的專家，現在有一件交通事故的敘述，請你將資訊歸納成如下的json格式，如果沒有資料請保持欄位空白，歸納的資訊請說明成類判決書格式。我 = 原告，對方 = 被告" + JSON.stringify(requestData.incidentJson)},
-                {"role": "user", "content": requestData.content }
+                { "role": "system", "content": "你現在是一件交通諮詢的專家，現在有一件交通事故的敘述，請你將資訊歸納成如下的json格式，如果沒有資料請保持欄位空白，歸納的資訊請說明成類判決書格式。我 = 原告，對方 = 被告" + JSON.stringify(requestData.incidentJson) },
+                { "role": "user", "content": requestData.content }
             ]
 
             const gptResponse = await openai.createChatCompletion({
@@ -195,15 +195,15 @@ exports.templateJSON = async (req, res) => {
                 console.error("Error parsing JSON:", error);
                 // Handle the error or return
             }
-            
+
         }
-        
+
         // - 已經有部分資訊了: 詢問還未知曉的資訊 (GPT - 1)
-        else{
+        else {
 
             const tidyMessage = [
-                {"role": "system","content": "現在有一個回答，是針對以下json格式的第一個沒有值的key，請依照此Json格式填入納格沒有值的key中，並且回覆整個Json格式，若使用者回覆不知道或忘記了請填入'未知'。請不要填入不相關的key中。" + JSON.stringify(requestData.incidentJson)},
-                {"role": "user", "content": requestData.content } // 把目前車禍相關的 JSON 與 使用者回覆串接
+                { "role": "system", "content": "你是一位事件擷取機器人，現在有一個描述是針對以下json格式中第一個空白value的回答，請加入以下整個Json，並且依照Json格式回覆，若使用者回覆不知道或忘記了請填入'未知'。請不要更改或填入不相關的key中。" + JSON.stringify(requestData.incidentJson) },
+                { "role": "user", "content": requestData.content } // 把目前車禍相關的 JSON 與 使用者回覆串接
             ]
             console.log("🚀 ~ file: chatGPTController.js:202 ~ exports.templateJSON= ~ tidyMessage:", tidyMessage)
 
@@ -224,14 +224,14 @@ exports.templateJSON = async (req, res) => {
                 console.error("Error parsing JSON:", error);
                 // Handle the error or return
             }
-            
-            
+
+
         }
 
         // - 最後 GPT 的回覆格式
-        const questionMessage = [ 
-            {"role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中第一個沒有值的key，產生一個詢問此key的問題。"},
-            {"role": "user", "content": JSON.stringify(requestData.incidentJson)}
+        const questionMessage = [
+            { "role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中第一個沒有value的key，產生一個詢問此key的問題。" },
+            { "role": "user", "content": JSON.stringify(requestData.incidentJson) }
         ]
         console.log("🚀 ~ file: chatGPTController.js:223 ~ exports.templateJSON= ~ questionMessage:", questionMessage)
 
