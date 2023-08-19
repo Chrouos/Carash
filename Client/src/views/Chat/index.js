@@ -103,7 +103,7 @@ function Chat() {
       .catch(error => console.error('Error fetching data:', error));
   }
 
-  // 一次輸出聊天紀錄
+  // + 一次輸出聊天紀錄
   const RenderChatBoxes = () => {
     const renderList = [];
 
@@ -123,6 +123,22 @@ function Chat() {
     return renderList;
   };
 
+  // + 一次輸出聊天紀錄
+  const RenderFieldValue = () => {
+    return Object.entries(contentLeftSiderValue).map(([key, value]) => {
+        return (
+            <Form.Item key={key} label={key}>
+                <Input
+                    id={key}
+                    name={key}
+                    placeholder={`currently unknown .... `}
+                    disabled
+                    value={value}
+                />
+            </Form.Item>
+        );
+    });
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -176,36 +192,15 @@ function Chat() {
               <Col span={contentLeftSide} className="code-box" style={{ overflow: 'auto' }} >
                 <div style={{ padding: '20px 10px 5px 10px' }}>
                   <Form form={caseDetailForm} layout="vertical" >
+
+                    {<RenderFieldValue />}
+
                     {/* <Form.Item label='提問者名稱' >
                       <Input
                         id="name" name="name" placeholder='Please enter your name.' disabled
                         value={contentLeftSideValue.name} />
-                    </Form.Item>
-                    <Form.Item label='事發地點' >
-                      <Input
-                        id="place" name="place" placeholder='Where did the accident happen.' disabled
-                        value={contentLeftSideValue.place} />
-                    </Form.Item>
-                    <Form.Item label='事發時間' >
-                      <Input id="time" name="time" placeholder='............' disabled
-                        value={contentLeftSideValue.time} />
-                    </Form.Item>
-                    <Form.Item label='車型' >
-                      <Input id="car" name="car" placeholder='..........' disabled
-                        value={contentLeftSideValue.car} />
-                    </Form.Item>
-                    <Form.Item label='傷勢' >
-                      <Input id="injury" name="injury" placeholder='..........' disabled
-                        value={contentLeftSideValue.injury} />
-                    </Form.Item>
-                    <Form.Item label='發生經過' >
-                      <TextArea id="happened" name="happened" placeholder='..........' disabled
-                        value={contentLeftSideValue.happened} />
-                    </Form.Item>
-                    <Form.Item label='可能賠償金額' >
-                      <Input id="amount" name="amount" placeholder='Forecast the amount of possible compensation.' disabled
-                        value={contentLeftSideValue.amount} />
                     </Form.Item> */}
+                    
 
                     <div style={{ textAlign: 'center' }}>
                       <Button icon={<EnterOutlined />} > 確認輸出內容 </Button>

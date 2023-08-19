@@ -5,10 +5,10 @@ const ConfigCrypto = require('./tools/ConfigCrypto')
 
 // -------------------- App Settings
 const app = express();
-const interfaces = os.networkInterfaces();  // 檢索該機器上的所有網絡接口
+const interfaces = os.networkInterfaces();  // Retrieve all network interfaces on this machine
 
 app.use(cors());
-app.use(express.json()); // 解析 JSON 请求体
+app.use(express.json()); // Parse the JSON request body
 
 const configCrypto = new ConfigCrypto();
 const port = configCrypto.config.PORT || 8000;
