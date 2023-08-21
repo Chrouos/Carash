@@ -169,6 +169,7 @@ exports.templateJSON = async (req, res) => {
         // - 整理 request data
         const requestData = req.body;   // Get data from the request.
         const notNullCount = Object.values(responseData.incidentJson).filter(value => value !== "").length; // 目前不是 Null 的值
+        console.log("requestData : ", requestData);
 
         // - 目前還未有任何資訊: 第一次對話
         if (notNullCount == 0) {
@@ -202,7 +203,7 @@ exports.templateJSON = async (req, res) => {
         else {
 
             const tidyMessage = [
-                { "role": "system", "content": "你是一位事件擷取機器人，現在有一個描述是針對以下json格式中第一個空白value的回答，請加入以下整個Json，並且依照Json格式回覆，若使用者回覆不知道或忘記了請填入'未知'。請不要更改或填入不相關的key中。" + JSON.stringify(requestData.incidentJson) },
+                { "role": "system", "content": "你是一位事件擷取機器人，現在有一個描述是針對以下json格式中空白value的回答，請加入以下整個Json，並且依照Json格式回覆，如果沒有資料請保留空白值，若使用者回覆不知道或忘記了請填入'未知'，請不要更改或填入不相關的key中。" + JSON.stringify(requestData.incidentJson) },
                 { "role": "user", "content": requestData.content } // 把目前車禍相關的 JSON 與 使用者回覆串接
             ]
             console.log("🚀 ~ file: chatGPTController.js:202 ~ exports.templateJSON= ~ tidyMessage:", tidyMessage)
@@ -230,10 +231,10 @@ exports.templateJSON = async (req, res) => {
 
         // - 最後 GPT 的回覆格式
         const questionMessage = [
-            { "role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中第一個沒有value的key，產生一個詢問此key的問題。" },
+            { "role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中第一個沒有value的key，產生一個詢問此key的問題。請不要回答問題以外的東西，你只需要提問就好。" },
             { "role": "user", "content": JSON.stringify(requestData.incidentJson) }
         ]
-        console.log("🚀 ~ file: chatGPTController.js:223 ~ exports.templateJSON= ~ questionMessage:", questionMessage)
+        //console.log("🚀 ~ file: chatGPTController.js:223 ~ exports.templateJSON= ~ questionMessage:", questionMessage)
 
         const gptResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo",
@@ -246,6 +247,7 @@ exports.templateJSON = async (req, res) => {
         });
 
         responseData.content = gptResponse.data.choices[0].message.content;
+        console.log("responseData : ", responseData);
         res.status(200).send(responseData);
 
     } catch (error) {
@@ -258,10 +260,9 @@ exports.templateJSON = async (req, res) => {
 /*
 
 1:
-108年4月30日，大概早上十點多的時候，我騎重機在中山路附近行駛。
-有台轎車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。
+108年4月30日，大概早上十點多的時候，我騎重機在中山路附近行駛。有台轎車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。
 
 2:
-我從北投區出發，那天氣晴，路況正常，我當時行駛車速大約50公里，我的車後燈損壞及車身有些擦傷
+我從北投區出發，我是綠燈，那天天氣晴朗，路況正常，我當時行駛車速大約50公里，我的車後燈損壞及車身有些擦傷。
 
 */
