@@ -1,6 +1,5 @@
 
 # 2023 法律X法遵科技黑客松
-
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 
@@ -60,7 +59,12 @@ npm start
 
 從 Home 中擷取以確認案例，利用事故機器行為代理人，以判決書為藍本與使用者輸出事件經過。
 
+---
 
+# 參考資料
++ 架設參考 [Git React 開發環境](https://gist.github.com/Jerry-Hong/cd319d4fa1815f5f970dd53982fea0ae)
++ 架構參考 [React 專案結構說明與配置(File Structure)](https://ithelp.ithome.com.tw/articles/10293697?sc=iThelpR)
++ nodemon 安裝參考 [使用 nodemon 取代 node 啟動程式](https://andy6804tw.github.io/2017/12/24/nodemon-tutorial/#%E4%BB%80%E9%BA%BC%E6%98%AF-nodemon)
 
 
 
@@ -84,7 +88,6 @@ The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
 ### `npm test`
-
 Launches the test runner in the interactive watch mode.\
 See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 

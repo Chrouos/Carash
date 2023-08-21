@@ -3,7 +3,7 @@ const CryptoJS = require('crypto-js')
 const ConfigCrypto = require('../tools/ConfigCrypto')
 
 var chatRecordTimes = 0;
-
+const ChromaDB_Tools = require('../tools/ChromaTools');
 
 exports.getTemplate = async (req, res) => {
     // + 交通事故的敘述 -> 歸納成 Json 的格式
@@ -169,7 +169,11 @@ exports.templateJSON = async (req, res) => {
         // - 整理 request data
         const requestData = req.body;   // Get data from the request.
         const notNullCount = Object.values(responseData.incidentJson).filter(value => value !== "").length; // 目前不是 Null 的值
-        console.log("requestData : ", requestData);
+        // console.log("[templateJSON] requestData : ", requestData);
+
+        // - 呼叫資料庫 ChromaDB
+        const chromadb = new ChromaDB_Tools("Traffic_Advisory");
+        var chromadbRequest = {};
 
         // - 目前還未有任何資訊: 第一次對話
         if (notNullCount == 0) {
@@ -192,6 +196,7 @@ exports.templateJSON = async (req, res) => {
             // 回傳的有可能不是 JSON
             try {
                 responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
+                chromadbRequest['ids'] = await chromadb.nextIds();
             } catch (error) {
                 console.error("Error parsing JSON:", error);
                 // Handle the error or return
@@ -206,7 +211,6 @@ exports.templateJSON = async (req, res) => {
                 { "role": "system", "content": "你是一位事件擷取機器人，現在有一個描述是針對以下json格式中空白value的回答，請加入以下整個Json，並且依照Json格式回覆，如果沒有資料請保留空白值，若使用者回覆不知道或忘記了請填入'未知'，請不要更改或填入不相關的key中。" + JSON.stringify(requestData.incidentJson) },
                 { "role": "user", "content": requestData.content } // 把目前車禍相關的 JSON 與 使用者回覆串接
             ]
-            console.log("🚀 ~ file: chatGPTController.js:202 ~ exports.templateJSON= ~ tidyMessage:", tidyMessage)
 
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo",
@@ -221,12 +225,11 @@ exports.templateJSON = async (req, res) => {
             // 回傳的有可能不是 JSON
             try {
                 responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
+                chromadbRequest['ids'] = responseData.chatIds;
             } catch (error) {
                 console.error("Error parsing JSON:", error);
                 // Handle the error or return
             }
-
-
         }
 
         // - 最後 GPT 的回覆格式
@@ -246,8 +249,19 @@ exports.templateJSON = async (req, res) => {
             presence_penalty: 0,
         });
 
+        // - 儲存至資料庫內部
+        chromadbRequest['metadatas'] = [responseData.incidentJson];
+        chromadbRequest['documents'] = responseData.incidentJson['事發經過'];
+
+        // - 儲存資料，第一次尋找 add, 第n次 update
+        if (notNullCount === 0){ chromadb.add(chromadbRequest) }
+        else { chromadb.update(chromadbRequest) }
+
+        console.log(await chromadb.peek());
+
         responseData.content = gptResponse.data.choices[0].message.content;
-        console.log("responseData : ", responseData);
+        responseData.chatIds = chromadbRequest['ids'];
+        // console.log("responseData : ", responseData);
         res.status(200).send(responseData);
 
     } catch (error) {
