@@ -62,7 +62,7 @@ class ChromaDB_Tools {
     async peek(data){
         try{
             const peeking = (await (await this.collection).peek(data));
-            console.log("🚀 ~ file: ChromaTools.js:65 ~ ChromaDB_Tools ~ peek ~ peeking:", peeking)
+            // console.log("🚀 ~ file: ChromaTools.js:65 ~ ChromaDB_Tools ~ peek ~ peeking:", peeking)
             
             return peeking
         }

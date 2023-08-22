@@ -153,6 +153,22 @@ exports.chat_test = async (req, res) => {
     }
 };
 
+exports.getTitle = async(req, res) => {
+    try {
+        const chromadb = new ChromaDB_Tools("Traffic_Advisory");
+        const titles = await chromadb.peek();
+        const responseData = titles.ids.map((id, index) => {
+            return Object.assign({}, {id: id}, titles.metadatas[index]);
+        });
+
+        res.status(200).send(responseData);
+    }
+    catch (error) {
+        console.error("[getTitle] Error :", error.message || error);
+        res.status(500).send(`[getTitle] Error : ${error.message || error}`);
+    }
+}
+
 
 exports.templateJSON = async (req, res) => {
     /*
@@ -269,8 +285,8 @@ exports.templateJSON = async (req, res) => {
         if (notNullCount === 0){
             chromadb.add({
                 ids: responseData.ids,
-                metadatas: [{title: responseData.title}],
-                documents: responseData.title
+                metadatas: [{title: responseData.title || "ChatBox"}],
+                documents: responseData.title || "ChatBox"
             })
             chromadb_json.add({
                 ids: responseData.ids,

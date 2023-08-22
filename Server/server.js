@@ -22,9 +22,10 @@ const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
 // chromadb.deleteCollection()
 // chromadb_json.deleteCollection()
 // chromadb_content.deleteCollection()
-chromadb_json.checkPeek()
 chromadb.checkPeek()
+chromadb_json.checkPeek()
 chromadb_content.checkPeek()
+
 
 // -------------------- routers list
 const chatGPT = require('./routers/chatGPTRouter')

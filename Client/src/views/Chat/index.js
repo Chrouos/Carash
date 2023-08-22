@@ -37,6 +37,7 @@ function Chat() {
     // "原告車輛損壞情形": "",
     // "被告傷勢": "",
     // "原告傷勢": ""
+
     "發生日期": "",
     "發生時間": "",
     "發生地點": "",
@@ -64,14 +65,7 @@ function Chat() {
   } = theme.useToken();
 
   // ! 到時候刪除(假資料)
-  const contentSiderName = [].map((name, index) => {
-    const key = String(index + 1);
-    return {
-      key,
-      label: name,
-      icon: <UserOutlined />,
-    }
-  })
+  const [titlesSider, setTitlesSider] = useState([])
 
   // ! (假資料) 需注意時間從「最舊」開始輸送
   const [chatContent, setChatContent] = useState([
@@ -81,29 +75,27 @@ function Chat() {
   // -------------------- 確認輸入聊天內容
   const enterChatValue = async () => {
 
-    
-
     // - 防呆：防止二次輸入
     if ( enterStatus == false ){ return ;}
+    setEnterStatus(false);
 
     // - 傳送給 API 的內容
-    const request = {
+    var request = {
       "content": chatInputValue,
       "incidentJson": contentLeftSiderValue,
       "title": currentTitle,
       "totalContent": chatContent,
     }
-    console.log("🚀 ~ file: index.js:80 ~ enterChatValue ~ currentIds:", currentIds)
     if (currentIds){
       request['ids'] = currentIds;
     }
 
+    // - 使用者先輸入內容後的顯示畫面
     setChatContent(prevContent => [ ...prevContent,
       { character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
       { character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
     );
     setChatInputValue(null);
-    setEnterStatus(false);
 
     await axios
       .post('/chatGPT/templateJSON', request, {
@@ -129,7 +121,51 @@ function Chat() {
       .catch(error => console.error('Error fetching data:', error));
   }
 
-  // + 一次輸出聊天紀錄
+  // -------------------- 獲得全部聊天紀錄名稱
+  const fetchingTitle = async () => {
+    const request = {}
+
+    await axios
+      .post('/chatGPT/getTitle', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+        console.log("🚀 ~ file: index.js:133 ~ fetchingTitle ~ response:", response.data)
+
+        // - 將資料整理後設為可選擇 Menu
+        const newTitleSider = response.data.map((name, index) => {
+          const key = String(index + 1);
+          return {
+            key,
+            label: name.title,
+            icon: <UserOutlined />,
+          }
+        })
+
+        setTitlesSider(newTitleSider);   
+
+      })
+      .catch(error => console.error('Error fetching data:', error));
+  }
+
+  // -------------------- 從 Menu 獲得聊天紀錄與Json
+  const fetchingContentJson = async () => {
+    const request = {
+    }
+
+    // await axios
+    //   .post('/chatGPT/getTitle', request, {
+    //     headers: authHeader(),
+    //   })
+    //   .then(response => {
+
+    //   })
+    //   .catch(error => console.error('Error fetching data:', error));
+  }
+
+
+
+  // -------------------- 一次輸出聊天紀錄
   const RenderChatBoxes = () => {
     const renderList = [];
 
@@ -149,7 +185,7 @@ function Chat() {
     return renderList;
   };
 
-  // + 一次輸出聊天紀錄
+  // -------------------- 一次輸出 Json 紀錄
   const RenderFieldValue = () => {
     return Object.entries(contentLeftSiderValue).map(([key, value]) => {
         return (
@@ -173,11 +209,17 @@ function Chat() {
     }
   };
 
-
+  // -------------------- 進入頁面後就直接執行
+  React.useEffect(() => {
+    fetchingTitle();
+  }, []) // 這裡的空陣列表示只在組件掛載時執行一次
+  
   React.useEffect(() => {
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     RenderChatBoxes();
   }, [chatContent]);
+
+
 
 
   return (
@@ -189,7 +231,7 @@ function Chat() {
         <Sider width={200} collapsed={collapsed} style={{ background: colorBgContainer, overflow: 'auto', height: '100%' }}>
           <Menu
             mode="inline"
-            items={contentSiderName}
+            items={titlesSider}
           >
           </Menu>
         </Sider>
@@ -208,6 +250,8 @@ function Chat() {
                 height: 64,
               }}
             />
+
+           
           </Header>
 
 

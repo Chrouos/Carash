@@ -66,7 +66,17 @@ npm start
 + 架構參考 [React 專案結構說明與配置(File Structure)](https://ithelp.ithome.com.tw/articles/10293697?sc=iThelpR)
 + nodemon 安裝參考 [使用 nodemon 取代 node 啟動程式](https://andy6804tw.github.io/2017/12/24/nodemon-tutorial/#%E4%BB%80%E9%BA%BC%E6%98%AF-nodemon)
 
-
+# API 呼叫結構
+```
+await axios
+  .post('/.../...', request, {
+    headers: authHeader(),
+  })
+  .then(response => {
+    ....    
+  })
+  .catch(error => console.error('Error fetching data:', error));
+```
 
 
 ---
