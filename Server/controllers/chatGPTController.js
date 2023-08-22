@@ -155,6 +155,14 @@ exports.chat_test = async (req, res) => {
 
 
 exports.templateJSON = async (req, res) => {
+    /*
+        ResponseData.
+            content,
+            incidentJson,
+            title,
+            ids,
+            totalContent
+    */
 
     try {
 
@@ -165,14 +173,16 @@ exports.templateJSON = async (req, res) => {
 
         // - 回傳資訊
         var responseData = req.body;
+        const userContent = req.body.content;
 
         // - 整理 request data
-        const requestData = req.body;   // Get data from the request.
+        const requestData = req.body;   
         const notNullCount = Object.values(responseData.incidentJson).filter(value => value !== "").length; // 目前不是 Null 的值
-        // console.log("[templateJSON] requestData : ", requestData);
 
         // - 呼叫資料庫 ChromaDB
         const chromadb = new ChromaDB_Tools("Traffic_Advisory");
+        const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
+        const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
         var chromadbRequest = {};
 
         // - 目前還未有任何資訊: 第一次對話
@@ -196,12 +206,10 @@ exports.templateJSON = async (req, res) => {
             // 回傳的有可能不是 JSON
             try {
                 responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
-                chromadbRequest['ids'] = await chromadb.nextIds();
+                responseData.ids = await chromadb.nextIds();
             } catch (error) {
                 console.error("Error parsing JSON:", error);
-                // Handle the error or return
             }
-
         }
 
         // - 已經有部分資訊了: 詢問還未知曉的資訊 (GPT - 1)
@@ -225,10 +233,8 @@ exports.templateJSON = async (req, res) => {
             // 回傳的有可能不是 JSON
             try {
                 responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
-                chromadbRequest['ids'] = responseData.chatIds;
             } catch (error) {
                 console.error("Error parsing JSON:", error);
-                // Handle the error or return
             }
         }
 
@@ -237,7 +243,6 @@ exports.templateJSON = async (req, res) => {
             { "role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中第一個沒有value的key，產生一個詢問此key的問題。請不要回答問題以外的東西，你只需要提問就好。" },
             { "role": "user", "content": JSON.stringify(requestData.incidentJson) }
         ]
-        //console.log("🚀 ~ file: chatGPTController.js:223 ~ exports.templateJSON= ~ questionMessage:", questionMessage)
 
         const gptResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo",
@@ -248,20 +253,49 @@ exports.templateJSON = async (req, res) => {
             frequency_penalty: 0,
             presence_penalty: 0,
         });
+        const responseContent = gptResponse.data.choices[0].message.content;
+
+        // - 回傳結果
+        responseData.content = responseContent;
+        const newContent = [
+            {ids: responseData.ids, character: 'questioner', value: userContent, createTime: '2023-07-18T05:44:00'},
+            {ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: '2023-07-18T05:44:00'}
+        ]
+        responseData.totalContent.push(
+            {character: 'questioner', value: userContent, createTime: '2023-07-18T05:44:00'},
+            {ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: '2023-07-18T05:44:00'});
 
         // - 儲存至資料庫內部
-        chromadbRequest['metadatas'] = [responseData.incidentJson];
-        chromadbRequest['documents'] = responseData.incidentJson['事發經過'];
-
-        // - 儲存資料，第一次尋找 add, 第n次 update
-        if (notNullCount === 0){ chromadb.add(chromadbRequest) }
-        else { chromadb.update(chromadbRequest) }
-
-        console.log(await chromadb.peek());
-
-        responseData.content = gptResponse.data.choices[0].message.content;
-        responseData.chatIds = chromadbRequest['ids'];
-        // console.log("responseData : ", responseData);
+        if (notNullCount === 0){
+            chromadb.add({
+                ids: responseData.ids,
+                metadatas: [{title: responseData.title}],
+                documents: responseData.title
+            })
+            chromadb_json.add({
+                ids: responseData.ids,
+                metadatas: [responseData.incidentJson],
+                documents: responseData.incidentJson['事發經過']
+            })
+        }
+        else{
+            chromadb.update({
+                ids: responseData.ids,
+                metadatas: [{title: responseData.title}],
+                documents: responseData.title
+            })
+            chromadb_json.update({
+                ids: responseData.ids,
+                metadatas: [responseData.incidentJson],
+                documents: responseData.incidentJson['事發經過']
+            })
+        }
+        
+        chromadb_content.add({
+            metadatas: newContent,
+            documents: [userContent, responseContent],
+        })
+        
         res.status(200).send(responseData);
 
     } catch (error) {

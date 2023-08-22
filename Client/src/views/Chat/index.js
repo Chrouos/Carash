@@ -22,12 +22,29 @@ function Chat() {
   const [collapsed, setCollapsed] = useState(false);
   const [chatInputValue, setChatInputValue] = useState('');
   const [contentLeftSiderValue, setContentLeftSiderValue] = useState({
-    "事故發生日期": "",
-    "事故發生時間": "",
-    "事故發生地點": "",
+    // "事故發生日期": "",
+    // "事故發生時間": "",
+    // "事故發生地點": "",
+    // "被告駕駛交通工具": "",
+    // "原告駕駛交通工具": "",
+    // "行駛道路": "",
+    // "事發經過": "",
+    // "行進方向的號誌": "",
+    // "天候": "",
+    // "路況": "",
+    // "行車速度": "",
+    // "被告車輛損壞情形": "",
+    // "原告車輛損壞情形": "",
+    // "被告傷勢": "",
+    // "原告傷勢": ""
+    "發生日期": "",
+    "發生時間": "",
+    "發生地點": "",
     "被告駕駛交通工具": "",
-    "原告駕駛交通工具": "",
+    "原告駕駛交通工具":"",
+    "出發地": "",
     "行駛道路": "",
+    "行進方向": "",
     "事發經過": "",
     "行進方向的號誌": "",
     "天候": "",
@@ -38,6 +55,8 @@ function Chat() {
     "被告傷勢": "",
     "原告傷勢": ""
   });
+  const [currentTitle, setCurrentTitle] = useState(null); // 目前標題
+  const [currentIds, setCurrentIds] = useState(null); // 目前 ids.
 
   // * Items
   const {
@@ -45,7 +64,7 @@ function Chat() {
   } = theme.useToken();
 
   // ! 到時候刪除(假資料)
-  const contentSiderName = ["chatBox1"].map((name, index) => {
+  const contentSiderName = [].map((name, index) => {
     const key = String(index + 1);
     return {
       key,
@@ -56,24 +75,34 @@ function Chat() {
 
   // ! (假資料) 需注意時間從「最舊」開始輸送
   const [chatContent, setChatContent] = useState([
-    { userId: '1', snId: '1', character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },
+    { character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },
   ]);
 
-  // 確認輸入聊天內容
+  // -------------------- 確認輸入聊天內容
   const enterChatValue = async () => {
 
+    
+
+    // - 防呆：防止二次輸入
     if ( enterStatus == false ){ return ;}
 
-    setChatContent(prevContent => [...prevContent,
-      { userId: '1', snId: '1', character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
-      { userId: '1', snId: '1', character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
-    );
-    setChatInputValue(null);
-
+    // - 傳送給 API 的內容
     const request = {
       "content": chatInputValue,
-      "incidentJson": contentLeftSiderValue
+      "incidentJson": contentLeftSiderValue,
+      "title": currentTitle,
+      "totalContent": chatContent,
     }
+    console.log("🚀 ~ file: index.js:80 ~ enterChatValue ~ currentIds:", currentIds)
+    if (currentIds){
+      request['ids'] = currentIds;
+    }
+
+    setChatContent(prevContent => [ ...prevContent,
+      { character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
+      { character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
+    );
+    setChatInputValue(null);
     setEnterStatus(false);
 
     await axios
@@ -81,22 +110,19 @@ function Chat() {
         headers: authHeader(),
       })
       .then(response => {
-        console.log("🚀 ~ file: index.js:82 ~ enterChatValue ~ response:", response)
+
+        // - 修改狀態
+        setCurrentIds(response.data.ids);
 
         // - 對話紀錄的更改
-        const responseContent = response.data.content;
-        setChatContent(prevContent => {
-          const newContent = prevContent.slice(0, prevContent.length - 1);  // 複製前面的所有資料，除了最後一筆
-
-          // 將修改後的資料追加到新陣列中
-          newContent.push({ userId: '1', snId: '1', character: 'chatBot', value: responseContent, createTime: '2023-07-18T05:44:00' });
-          return newContent;
-        });
+        const responseContent = response.data.totalContent;
+        setChatContent(responseContent);
 
         // - JSON 紀錄的修改
         const myJsonResponse = response.data.incidentJson;
         setContentLeftSiderValue(myJsonResponse);
 
+        // - 防呆結束：防止二次輸入
         setEnterStatus(true);
         
       })

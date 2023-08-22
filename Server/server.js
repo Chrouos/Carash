@@ -16,12 +16,15 @@ let hostname = configCrypto.config.HOSTNAME || 'localhost';
 
 // -------------------- Chroma
 const ChromaDB_Tools = require('./tools/ChromaTools');
-const collectionName = "Traffic_Advisory"
-const chromadb = new ChromaDB_Tools(collectionName);
-chromadb.deleteCollection()
-
-
-
+const chromadb = new ChromaDB_Tools("Traffic_Advisory");
+const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
+const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
+// chromadb.deleteCollection()
+// chromadb_json.deleteCollection()
+// chromadb_content.deleteCollection()
+chromadb_json.checkPeek()
+chromadb.checkPeek()
+chromadb_content.checkPeek()
 
 // -------------------- routers list
 const chatGPT = require('./routers/chatGPTRouter')

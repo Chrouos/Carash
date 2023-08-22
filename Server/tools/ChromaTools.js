@@ -26,6 +26,7 @@ class ChromaDB_Tools {
     async get(data){
         try{
             const getting = (await (await this.collection).get(data));
+            console.log("🚀 ~ file: ChromaTools.js:29 ~ ChromaDB_Tools ~ get ~ getting:", getting)
 
             return getting
         }
@@ -48,6 +49,7 @@ class ChromaDB_Tools {
     async query(data){
         try{
             const querying = (await (await this.collection).query(data));
+            console.log("🚀 ~ file: ChromaTools.js:51 ~ ChromaDB_Tools ~ query ~ querying:", querying)
             
             return querying
         }
@@ -60,7 +62,7 @@ class ChromaDB_Tools {
     async peek(data){
         try{
             const peeking = (await (await this.collection).peek(data));
-            // console.log(`[${this.configCrypto.config.CHROMA_NAME}] list of the first 10 items in the collection:`, {peeking});
+            console.log("🚀 ~ file: ChromaTools.js:65 ~ ChromaDB_Tools ~ peek ~ peeking:", peeking)
             
             return peeking
         }
@@ -86,8 +88,14 @@ class ChromaDB_Tools {
     async add(data){
         try{
             if (!data.hasOwnProperty('ids')){
-                data['ids'] = await this.nextIds();
+
+                data['ids'] = [];
+                for (let i=0; i < data['metadatas'].length; i++) {
+                    data['ids'].push(await this.nextIds(i));
+                }
+                
             }            
+
             await ((await this.collection).add(data));
         }
         catch(err){
@@ -140,7 +148,12 @@ class ChromaDB_Tools {
     async checkVersion () {
         const chromaVersion = await this.client.version();
         console.log(`Chroma Version: ${chromaVersion}`)
+    }
 
+    // + 確認目前所有的 collections
+    async checkPeek (data) {
+        const peekData = (await (await this.collection).peek(data));
+        console.log(`${this.chromaName} peekData:`, peekData)
     }
 
     // + 確認 Chroma 名稱
@@ -149,9 +162,9 @@ class ChromaDB_Tools {
     }
 
     // + 下一個 id 名稱
-    async nextIds () {
+    async nextIds (i = 0) {
         try{
-            const nowIds = this.configCrypto.config.CHROMA_NAME + "_" + (await this.count() + 1);
+            const nowIds = this.configCrypto.config.CHROMA_NAME + "_" + (await this.count() + 1 + i);
             return nowIds
         }
         catch(err){
