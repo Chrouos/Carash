@@ -12,16 +12,7 @@ import authHeader from '../../store/auth-header';
 
 function Chat() {
 
-  // * Settings
-  const contentLeftSide = 9, contentRightSide = 23 - contentLeftSide;
-  const chatContainerRef = React.useRef(null);
-  const [caseDetailForm] = Form.useForm();
-  const [enterStatus, setEnterStatus] = useState(true);
-
-  // * State
-  const [collapsed, setCollapsed] = useState(false);
-  const [chatInputValue, setChatInputValue] = useState('');
-  const [contentLeftSiderValue, setContentLeftSiderValue] = useState({
+  const incidentTemplate = {
     "事故發生日期": "",
     "事故發生時間": "",
     "事故發生地點": "",
@@ -37,27 +28,20 @@ function Chat() {
     "原告車輛損壞情形": "",
     "被告傷勢": "",
     "原告傷勢": ""
+  };
 
-    // "發生日期": "",
-    // "發生時間": "",
-    // "發生地點": "",
-    // "被告駕駛交通工具": "",
-    // "原告駕駛交通工具":"",
-    // "出發地": "",
-    // "行駛道路": "",
-    // "行進方向": "",
-    // "事發經過": "",
-    // "行進方向的號誌": "",
-    // "天候": "",
-    // "路況": "",
-    // "行車速度": "",
-    // "被告車輛損壞情形": "",
-    // "原告車輛損壞情形": "",
-    // "被告傷勢": "",
-    // "原告傷勢": ""
-  });
-  const [currentTitle, setCurrentTitle] = useState("test..."); // 目前標題
-  const [currentIds, setCurrentIds] = useState(null); // 目前 ids.
+  // * Settings
+  const contentLeftSide = 9, contentRightSide = 23 - contentLeftSide;
+  const chatContainerRef = React.useRef(null);
+  const [caseDetailForm] = Form.useForm();
+  const [enterStatus, setEnterStatus] = useState(true);
+
+  // * State
+  const [collapsed, setCollapsed] = useState(false);
+  const [chatInputValue, setChatInputValue] = useState('');
+  const [incidentJsonSiderValue, setIncidentJsonSiderValue] = useState(incidentTemplate); // + incident Json
+  const [currentTitle, setCurrentTitle] = useState(""); // + Title
+  const [currentIds, setCurrentIds] = useState(null); // + Ids
 
   // * Items
   const {
@@ -82,7 +66,7 @@ function Chat() {
     // - 傳送給 API 的內容
     var request = {
       "content": chatInputValue,
-      "incidentJson": contentLeftSiderValue,
+      "incidentJson": incidentJsonSiderValue,
       "title": currentTitle,
       "totalContent": chatContent,
     }
@@ -105,6 +89,7 @@ function Chat() {
 
         // - 修改狀態
         setCurrentIds(response.data.ids);
+        setCurrentTitle(response.data.title);
 
         // - 對話紀錄的更改
         const responseContent = response.data.totalContent;
@@ -112,7 +97,7 @@ function Chat() {
 
         // - JSON 紀錄的修改
         const myJsonResponse = response.data.incidentJson;
-        setContentLeftSiderValue(myJsonResponse);
+        setIncidentJsonSiderValue(myJsonResponse);
 
         // - 防呆結束：防止二次輸入
         setEnterStatus(true);
@@ -162,10 +147,19 @@ function Chat() {
       })
       .then(response => {
         setChatContent(response.data.totalContent);
-        setContentLeftSiderValue(response.data.incidentJson)
+        setIncidentJsonSiderValue(response.data.incidentJson);
+        setCurrentTitle(response.data.title)
       })
       .catch(error => console.error('Error fetching data:', error));
-  }
+  };
+
+  const createNewChat = () => {
+    setCurrentIds(null);
+    setCurrentTitle(null);
+    setChatContent([{ character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },])
+    setIncidentJsonSiderValue(incidentTemplate);
+  };
+
 
   // -------------------- 一次輸出聊天紀錄
   const RenderChatBoxes = () => {
@@ -189,7 +183,7 @@ function Chat() {
 
   // -------------------- 一次輸出 Json 紀錄
   const RenderFieldValue = () => {
-    return Object.entries(contentLeftSiderValue).map(([key, value]) => {
+    return Object.entries(incidentJsonSiderValue).map(([key, value]) => {
         return (
             <Form.Item key={key} label={key}>
                 <Input
@@ -203,6 +197,8 @@ function Chat() {
         );
     });
   };
+
+  
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -222,8 +218,6 @@ function Chat() {
   }, [chatContent]);
 
 
-
-
   return (
 
     <Content>
@@ -241,18 +235,22 @@ function Chat() {
         {/* Right Content */}
         <Content style={{ padding: '0 24px', minHeight: 280 }}>
 
-          <Header style={{ padding: 0, background: colorBgContainer }}>
-            <Button
-              type="text"
+        <Header style={{ padding: 0, background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Button type="text" 
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed(!collapsed)}
-              style={{
-                fontSize: '16px',
-                width: 64,
-                height: 64,
-              }}
+              style={{fontSize: '16px', width: 64, height: 64}}
             />
-          </Header>
+            <Input 
+              placeholder='Please enter this chat title, default = testChatBox' style={{width: '350px'}} 
+              value={currentTitle}
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', paddingRight: '3%' }}>
+            <Button style={{width: '150px'}} onClick={() => {createNewChat()}}>New Chat</Button>
+          </div>
+        </Header>
 
 
           <div style={{ padding: '24px 0 0 0', marginTop: 8, height: '90%' }}>

@@ -175,10 +175,17 @@ exports.getContentJson = async(req, res) => {
         const responseContent = await chromadb_content.get({
             where: { ids: req.body.ids },
         });
+
+        // - 聊天名稱 的資料取出
+        const chromadb = new ChromaDB_Tools("Traffic_Advisory");
+        const response = await chromadb.get({
+            ids: req.body.ids
+        });
         
         // - 準備輸出內容
-        responseData.totalContent = responseContent.metadatas
+        responseData.totalContent = responseContent.metadatas;
         responseData.incidentJson = responseJson.metadatas[0];
+        responseData.title = response.documents;
         
         res.status(200).send(responseData);
     }
@@ -312,8 +319,8 @@ exports.templateJSON = async (req, res) => {
         if (notNullCount === 0){
             chromadb.add({
                 ids: responseData.ids,
-                metadatas: [{title: responseData.title || "ChatBox"}],
-                documents: responseData.title || "ChatBox"
+                metadatas: [{title: responseData.title || "testChatBox"}],
+                documents: responseData.title || "testChatBox"
             })
             chromadb_json.add({
                 ids: responseData.ids,
@@ -324,8 +331,8 @@ exports.templateJSON = async (req, res) => {
         else{
             chromadb.update({
                 ids: responseData.ids,
-                metadatas: [{title: responseData.title || "ChatBox"}],
-                documents: responseData.title || "ChatBox"
+                metadatas: [{title: responseData.title || "testChatBox"}],
+                documents: responseData.title || "testChatBox"
             })
             chromadb_json.update({
                 ids: responseData.ids,
