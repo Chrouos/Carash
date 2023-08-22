@@ -56,7 +56,7 @@ function Chat() {
     // "被告傷勢": "",
     // "原告傷勢": ""
   });
-  const [currentTitle, setCurrentTitle] = useState(null); // 目前標題
+  const [currentTitle, setCurrentTitle] = useState("test..."); // 目前標題
   const [currentIds, setCurrentIds] = useState(null); // 目前 ids.
 
   // * Items
@@ -64,10 +64,10 @@ function Chat() {
     token: { colorBgContainer },
   } = theme.useToken();
 
-  // ! 到時候刪除(假資料)
+  // + titlesSider: 所有聊天紀錄的名稱
   const [titlesSider, setTitlesSider] = useState([])
 
-  // ! (假資料) 需注意時間從「最舊」開始輸送
+  // + chatContent: 聊天內容
   const [chatContent, setChatContent] = useState([
     { character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },
   ]);
@@ -132,14 +132,13 @@ function Chat() {
         headers: authHeader(),
       })
       .then(response => {
-        console.log("🚀 ~ file: index.js:133 ~ fetchingTitle ~ response:", response.data)
 
         // - 將資料整理後設為可選擇 Menu
-        const newTitleSider = response.data.map((name, index) => {
-          const key = String(index + 1);
+        const newTitleSider = response.data.map((item, index) => {
+          // const key = String(index + 1);
           return {
-            key,
-            label: name.title,
+            key: item.id,
+            label: item.title,
             icon: <UserOutlined />,
           }
         })
@@ -151,21 +150,22 @@ function Chat() {
   }
 
   // -------------------- 從 Menu 獲得聊天紀錄與Json
-  const fetchingContentJson = async () => {
+  const fetchingContentJson = async (currentIds) => {
     const request = {
+      ids: currentIds
     }
+    setCurrentIds(currentIds);
 
-    // await axios
-    //   .post('/chatGPT/getTitle', request, {
-    //     headers: authHeader(),
-    //   })
-    //   .then(response => {
-
-    //   })
-    //   .catch(error => console.error('Error fetching data:', error));
+    await axios
+      .post('/chatGPT/getContentJson', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+        setChatContent(response.data.totalContent);
+        setContentLeftSiderValue(response.data.incidentJson)
+      })
+      .catch(error => console.error('Error fetching data:', error));
   }
-
-
 
   // -------------------- 一次輸出聊天紀錄
   const RenderChatBoxes = () => {
@@ -214,7 +214,7 @@ function Chat() {
   // -------------------- 進入頁面後就直接執行
   React.useEffect(() => {
     fetchingTitle();
-  }, []) // 這裡的空陣列表示只在組件掛載時執行一次
+  }, []) // 空陣列表示只在組件掛載時執行一次
   
   React.useEffect(() => {
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -231,11 +231,11 @@ function Chat() {
 
         {/* Left sider */}
         <Sider width={200} collapsed={collapsed} style={{ background: colorBgContainer, overflow: 'auto', height: '100%' }}>
-          <Menu
-            mode="inline"
-            items={titlesSider}
-          >
-          </Menu>
+        <Menu
+          mode="inline"
+          items={titlesSider}
+          onClick={(e) => {fetchingContentJson(e.key)}}
+        />
         </Sider>
 
         {/* Right Content */}
@@ -252,8 +252,6 @@ function Chat() {
                 height: 64,
               }}
             />
-
-           
           </Header>
 
 

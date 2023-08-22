@@ -11,13 +11,11 @@ exports.getTemplate = async (req, res) => {
     try {
 
         const requestData = req.body; // Data from the request.
-        console.log("🚀 ~ file: chatGPTController.js:11 ~ exports.getTemplate= ~ requestData:", requestData)
         chatRecordTimes += 1;
 
         // Decrypt
         const configCrypto = new ConfigCrypto();
         const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
-        console.log(`After decrypt => ${OPENAI_API_KEY}`)
 
         const configuration = new Configuration({
             apiKey: OPENAI_API_KEY
@@ -35,7 +33,6 @@ exports.getTemplate = async (req, res) => {
                 },
             ]
             firstmessages.push(...requestData);
-            //console.log(firstmessages);
 
             const firstResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo",
@@ -48,7 +45,6 @@ exports.getTemplate = async (req, res) => {
             });
 
             jsonResponseData = firstResponse.data.choices[0].message;
-            //console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ firstResponse.data.choices[0].message:\n", firstResponse.data.choices[0].message)
 
         }
         else {
@@ -70,7 +66,6 @@ exports.getTemplate = async (req, res) => {
             });
 
             jsonResponseData = jsonResponse.data.choices[0].message;
-            //console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ jsonResponse.data.choices[0].message:\n", jsonResponse.data.choices[0].message)
 
         }
 
@@ -81,7 +76,6 @@ exports.getTemplate = async (req, res) => {
         }]
         questionMessage.push(jsonResponseData);
 
-        //console.log("questionMessage : ", questionMessage);
 
         const questionResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo",
@@ -96,7 +90,6 @@ exports.getTemplate = async (req, res) => {
         const gptResponse = [questionResponse.data.choices[0].message];
         gptResponse.push(jsonResponseData);
 
-        console.log("🚀 ~ file: chatGPTController.js:158 ~ exports.getTemplate= ~ gptResponse:", gptResponse)
         res.status(200).send(gptResponse);
 
 
@@ -114,7 +107,6 @@ exports.chat_test = async (req, res) => {
 
     try {
         const requestData = req.body; // Data from the request.
-        console.log("🚀 ~ file: chatGPTController.js:71 ~ exports.chat_test= ~ requestData:", requestData)
 
         const messageList = [{
             "role": "user",
@@ -124,7 +116,6 @@ exports.chat_test = async (req, res) => {
         // Decrypt
         const en_OPENAI_API_KEY = config.get('chatGPT.key');
         const OPENAI_API_KEY = CryptoJS.AES.decrypt(en_OPENAI_API_KEY, "").toString(CryptoJS.enc.Utf8)
-        console.log(`After decrypt => ${OPENAI_API_KEY}`)
 
         const configuration = new Configuration({
             apiKey: OPENAI_API_KEY
@@ -143,7 +134,6 @@ exports.chat_test = async (req, res) => {
             presence_penalty: 0
         });
 
-        console.log("🚀 ~ file: chatGPTController.js:34 ~ exports.getTemplate= ~ response.data.choices[0].message:\n", response.data.choices[0].message)
         res.status(200).send(response.data.choices[0].message.content);
 
     } catch (error) {
@@ -166,6 +156,35 @@ exports.getTitle = async(req, res) => {
     catch (error) {
         console.error("[getTitle] Error :", error.message || error);
         res.status(500).send(`[getTitle] Error : ${error.message || error}`);
+    }
+}
+
+exports.getContentJson = async(req, res) => {
+    try {
+
+        var responseData = {};
+
+        // - 車禍 Json 的資料取出
+        const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
+        const responseJson = await chromadb_json.get({
+            ids: req.body.ids
+        });
+
+        // - 聊天內容 的資料取出
+        const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
+        const responseContent = await chromadb_content.get({
+            where: { ids: req.body.ids },
+        });
+        
+        // - 準備輸出內容
+        responseData.totalContent = responseContent.metadatas
+        responseData.incidentJson = responseJson.metadatas[0];
+        
+        res.status(200).send(responseData);
+    }
+    catch (error) {
+        console.error("[getContentJson] Error :", error.message || error);
+        res.status(500).send(`[getContentJson] Error : ${error.message || error}`);
     }
 }
 
@@ -199,7 +218,10 @@ exports.templateJSON = async (req, res) => {
         const chromadb = new ChromaDB_Tools("Traffic_Advisory");
         const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
         const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
-        var chromadbRequest = {};
+
+        // - 取得台灣的即時時間
+        const taiwanTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"});
+        const createTime = new Date(taiwanTime).toISOString();
 
         // - 目前還未有任何資訊: 第一次對話
         if (notNullCount == 0) {
@@ -223,6 +245,11 @@ exports.templateJSON = async (req, res) => {
             try {
                 responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
                 responseData.ids = await chromadb.nextIds();
+
+                chromadb_content.add({
+                    metadatas: [{ids: responseData.ids, character: 'chatBot',  value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: createTime}],
+                    documents: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
+                })
             } catch (error) {
                 console.error("Error parsing JSON:", error);
             }
@@ -274,12 +301,12 @@ exports.templateJSON = async (req, res) => {
         // - 回傳結果
         responseData.content = responseContent;
         const newContent = [
-            {ids: responseData.ids, character: 'questioner', value: userContent, createTime: '2023-07-18T05:44:00'},
-            {ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: '2023-07-18T05:44:00'}
+            {ids: responseData.ids, character: 'questioner', value: userContent, createTime: createTime},
+            {ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: createTime}
         ]
         responseData.totalContent.push(
-            {character: 'questioner', value: userContent, createTime: '2023-07-18T05:44:00'},
-            {ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: '2023-07-18T05:44:00'});
+            {ids: responseData.ids,character: 'questioner', value: userContent, createTime: createTime},
+            {ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: createTime});
 
         // - 儲存至資料庫內部
         if (notNullCount === 0){
@@ -297,8 +324,8 @@ exports.templateJSON = async (req, res) => {
         else{
             chromadb.update({
                 ids: responseData.ids,
-                metadatas: [{title: responseData.title}],
-                documents: responseData.title
+                metadatas: [{title: responseData.title || "ChatBox"}],
+                documents: responseData.title || "ChatBox"
             })
             chromadb_json.update({
                 ids: responseData.ids,
