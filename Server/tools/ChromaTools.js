@@ -4,10 +4,12 @@ const ConfigCrypto = require('./ConfigCrypto')
 class ChromaDB_Tools {
 
     constructor(chromaName) {
-        this.client = new ChromaClient();
         this.configCrypto = new ConfigCrypto();
-
         this.chromaName = chromaName || this.configCrypto.config.CHROMA_NAME;;
+
+        this.client = new ChromaClient({
+            path: `http://${this.configCrypto.config.HOSTNAME}:8000`
+        });
         this.collection = this.connecting();
     }
 

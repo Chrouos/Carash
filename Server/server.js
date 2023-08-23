@@ -15,10 +15,11 @@ const port = configCrypto.config.PORT || 8280;
 let hostname = configCrypto.config.HOSTNAME || 'localhost';
 
 // -------------------- Chroma
+
 const ChromaDB_Tools = require('./tools/ChromaTools');
 const chromadb = new ChromaDB_Tools("Traffic_Advisory");
-const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
-const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
+// const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
+// const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
 // chromadb.deleteCollection()
 // chromadb_json.deleteCollection()
 // chromadb_content.deleteCollection()
