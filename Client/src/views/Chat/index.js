@@ -43,7 +43,7 @@ function Chat() {
   const [currentTitle, setCurrentTitle] = useState(""); // + Title
   const [currentIds, setCurrentIds] = useState(null); // + Ids
 
-  // * Items
+  // + Items
   const {
     token: { colorBgContainer },
   } = theme.useToken();
