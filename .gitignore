@@ -5,9 +5,15 @@
 /Server/node_modules
 /Server/config/
 /Database/
+*.pkl
+*.log
+/Server/lawsnote_project/log
+__pycache__/
+
+
 /.pnp
 .pnp.js
-/.pkl
+
 
 # testing
 /coverage

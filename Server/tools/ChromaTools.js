@@ -10,6 +10,7 @@ class ChromaDB_Tools {
         this.client = new ChromaClient({
             path: `http://${this.configCrypto.config.HOSTNAME}:8000`
         });
+
         this.collection = this.connecting();
     }
 

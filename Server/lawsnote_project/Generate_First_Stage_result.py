@@ -98,7 +98,7 @@ if __name__ == "__main__":
     test_dataset = init_test_dataset(config)
     
     results = First_Stage_Test(parameters, test_dataset, config, gpu_list)
-    print("result:", results)
+    print(results)
     
     
     logger.info("Done!")
