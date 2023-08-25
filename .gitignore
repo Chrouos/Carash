@@ -5,6 +5,7 @@
 /Server/node_modules
 /Server/config/
 /Database/
+/Server/lawsnote_project
 /.pnp
 .pnp.js
 

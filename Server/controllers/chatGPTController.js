@@ -1,127 +1,22 @@
 const { Configuration, OpenAIApi } = require("openai");
 const CryptoJS = require('crypto-js')
 const ConfigCrypto = require('../tools/ConfigCrypto')
-
-var chatRecordTimes = 0;
 const ChromaDB_Tools = require('../tools/ChromaTools');
 
-exports.getTemplate = async (req, res) => {
-    // + 交通事故的敘述 -> 歸納成 Json 的格式
-
-    try {
-
-        const requestData = req.body; // Data from the request.
-        chatRecordTimes += 1;
-
-        // Decrypt
-        const configCrypto = new ConfigCrypto();
-        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
-
-        const configuration = new Configuration({
-            apiKey: OPENAI_API_KEY
-        });
-
-        const openai = new OpenAIApi(configuration);
-        let jsonResponseData;
-
-        if (chatRecordTimes = 1) {
-
-            const firstmessages = [
-                {
-                    "role": "system",
-                    "content": "你現在是一件交通諮詢的專家，現在有一件交通事故的敘述，請你將資訊歸納成如下的json格式，如果沒有資料請保持欄位空白。{\"發生日期\": \"\",\"發生時間\": \"\",\"發生地點\": \"\",\"被告駕駛交通工具\": \"\",\"原告駕駛交通工具\": \"\",\"出發地\": \"\",\"行駛道路\": \"\",\"行進方向\": \"\",\"事發經過\": \"\",\"行進方向的號誌\": \"\",\"天候\": \"\",\"路況\": \"\",\"行車速度\": \"\",\"被告車輛損壞情形\": \"\",\"原告車輛損壞情形\": \"\",\"被告傷勢\": \"\",\"原告傷勢\": \"\"}"
-                },
-            ]
-            firstmessages.push(...requestData);
-
-            const firstResponse = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
-                messages: firstmessages,
-                temperature: 0.1,
-                max_tokens: 1024,
-                top_p: 1,
-                frequency_penalty: 0,
-                presence_penalty: 0,
-            });
-
-            jsonResponseData = firstResponse.data.choices[0].message;
-
-        }
-        else {
-
-            const jsonMessage = [{
-                "role": "system",
-                "content": "現在有一個回答，是針對以下json格式的第一個沒有值的key，請依照此Json格式填入納格沒有值的key中，並且回覆整個Json格式，若使用者回覆不知道或忘記了請填入'未知'。請不要填入不相關的key中。"
-            }]
-            jsonMessage.push(...requestData);
-
-            const jsonResponse = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
-                messages: jsonMessage,
-                temperature: 0.1,
-                max_tokens: 1024,
-                top_p: 1,
-                frequency_penalty: 0,
-                presence_penalty: 0
-            });
-
-            jsonResponseData = jsonResponse.data.choices[0].message;
-
-        }
-
-
-        const questionMessage = [{
-            "role": "system",
-            "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中第一個沒有值的key，產生一個詢問此key的問題。"
-        }]
-        questionMessage.push(jsonResponseData);
-
-
-        const questionResponse = await openai.createChatCompletion({
-            model: "gpt-3.5-turbo",
-            messages: questionMessage,
-            temperature: 0.1,
-            max_tokens: 1024,
-            top_p: 1,
-            frequency_penalty: 0,
-            presence_penalty: 0
-        });
-
-        const gptResponse = [questionResponse.data.choices[0].message];
-        gptResponse.push(jsonResponseData);
-
-        res.status(200).send(gptResponse);
-
-
-    } catch (error) {
-        console.error("Error fetching from OpenAI:", error.message || error);
-        res.status(500).send(`Error fetching from OpenAI: ${error.message || error}`);
-
-    }
-};
-
-
-// response.data.choices[0].message
 exports.chat_test = async (req, res) => {
     // + 與前端的聊天測試
 
     try {
         const requestData = req.body; // Data from the request.
-
         const messageList = [{
             "role": "user",
             "content": requestData.content
         }]
 
-        // Decrypt
-        const en_OPENAI_API_KEY = config.get('chatGPT.key');
-        const OPENAI_API_KEY = CryptoJS.AES.decrypt(en_OPENAI_API_KEY, "").toString(CryptoJS.enc.Utf8)
-
-        const configuration = new Configuration({
-            apiKey: OPENAI_API_KEY
-        });
-
-        const openai = new OpenAIApi(configuration);
+        // - 獲得 OpenAI API
+        const configCrypto = new ConfigCrypto();
+        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
+        const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
 
         // ! 產生可能會需要一點時間
         const response = await openai.createChatCompletion({
@@ -251,15 +146,15 @@ exports.templateJSON = async (req, res) => {
             // 回傳的有可能不是 JSON
             try {
                 responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
-                responseData.ids = await chromadb.nextIds();
-
-                chromadb_content.add({
-                    metadatas: [{ids: responseData.ids, character: 'chatBot',  value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: createTime}],
-                    documents: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
-                })
             } catch (error) {
-                console.error("Error parsing JSON:", error);
+                console.error("🐛 chatGPTController - parse Json Failed:", error);
             }
+
+            responseData.ids = await chromadb.nextIds();
+            chromadb_content.add({
+                metadatas: [{ids: responseData.ids, character: 'chatBot',  value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: createTime}],
+                documents: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
+            })
         }
 
         // - 已經有部分資訊了: 詢問還未知曉的資訊 (GPT - 1)

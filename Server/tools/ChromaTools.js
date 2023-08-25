@@ -92,12 +92,12 @@ class ChromaDB_Tools {
             if (!data.hasOwnProperty('ids')){
 
                 data['ids'] = [];
+
                 for (let i=0; i < data['metadatas'].length; i++) {
                     data['ids'].push(await this.nextIds(i));
                 }
                 
-            }            
-
+            }       
             await ((await this.collection).add(data));
         }
         catch(err){

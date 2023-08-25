@@ -1,7 +1,7 @@
 import ChatBox from './chatBox';
 import './styles.css';
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useRef } from "react";
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Layout, Menu, Button, theme, Col, Row, Input, Form } from "antd";
 const { Content, Sider, Header } = Layout;
@@ -32,9 +32,11 @@ function Chat() {
 
   // * Settings
   const contentLeftSide = 9, contentRightSide = 23 - contentLeftSide;
-  const chatContainerRef = React.useRef(null);
   const [caseDetailForm] = Form.useForm();
   const [enterStatus, setEnterStatus] = useState(true);
+
+  // * Ref
+  const chatContainerRef = useRef(null);
 
   // * State
   const [collapsed, setCollapsed] = useState(false);
@@ -101,11 +103,13 @@ function Chat() {
 
         // - 防呆結束：防止二次輸入
         setEnterStatus(true);
-
-        fetchingTitle();
         
       })
+      .then(() => {
+        fetchingTitle();
+      })
       .catch(error => console.error('Error fetching data:', error));
+
   }
 
   // -------------------- 獲得全部聊天紀錄名稱
@@ -156,8 +160,10 @@ function Chat() {
   const createNewChat = () => {
     setCurrentIds(null);
     setCurrentTitle(null);
+    setChatInputValue(null);
     setChatContent([{ character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },])
     setIncidentJsonSiderValue(incidentTemplate);
+    console.log("now is createNewChat")
   };
 
 
@@ -185,15 +191,16 @@ function Chat() {
   const RenderFieldValue = () => {
     return Object.entries(incidentJsonSiderValue).map(([key, value]) => {
         return (
-            <Form.Item key={key} label={key}>
-                <Input
-                    id={key}
-                    name={key}
-                    placeholder={`currently unknown .... `}
-                    disabled
-                    value={value}
-                />
-            </Form.Item>
+          <Form.Item key={key}>
+            <label htmlFor={key}>{key}</label>
+            <Input
+              id={key}
+              name={key}
+              placeholder={`currently unknown .... `}
+              disabled
+              value={value}
+            />
+          </Form.Item>
         );
     });
   };
@@ -236,20 +243,27 @@ function Chat() {
         <Content style={{ padding: '0 24px', minHeight: 280 }}>
 
         <Header style={{ padding: 0, background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignContent: 'center' }}>
+
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Button type="text" 
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed(!collapsed)}
               style={{fontSize: '16px', width: 64, height: 64}}
             />
-            <Input 
-              placeholder='Please enter this chat title, default = testChatBox' style={{width: '350px'}} 
-              value={currentTitle}
+            <label htmlFor="title">標題： </label>
+            <Input
+              id="title"
+              value={currentTitle} 
+              onChange={(e) => setCurrentTitle(e.target.value)} 
+              placeholder='Please enter this chat title, default = testChatBox' 
+              style={{width: '350px'}} 
             />
           </div>
+
           <div style={{ display: 'flex', alignItems: 'center', paddingRight: '3%' }}>
             <Button style={{width: '150px'}} onClick={() => {createNewChat()}}>New Chat</Button>
           </div>
+
         </Header>
 
 
@@ -262,12 +276,6 @@ function Chat() {
                   <Form form={caseDetailForm} layout="vertical" >
 
                     {<RenderFieldValue />}
-
-                    {/* <Form.Item label='提問者名稱' >
-                      <Input
-                        id="name" name="name" placeholder='Please enter your name.' disabled
-                        value={contentLeftSideValue.name} />
-                    </Form.Item> */}
                     
 
                     <div style={{ textAlign: 'center' }}>

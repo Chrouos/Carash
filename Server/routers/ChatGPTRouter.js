@@ -1,13 +1,13 @@
 const { Router } = require('express');
-const chatGPTController = require('../controllers/chatGPTController')
+const chatGPTController = require('../controllers/ChatGPTController')
 
 const app = Router();
-  
-app.post('/chatGPT/classified_chat', chatGPTController.getTemplate);
+
+// - Action. 
 app.post('/chatGPT/chat_test', chatGPTController.chat_test);
 app.post('/chatGPT/templateJSON', chatGPTController.templateJSON);
 
-// 
+// - 取得目前資料
 app.post('/chatGPT/getTitle', chatGPTController.getTitle);
 app.post('/chatGPT/getContentJson', chatGPTController.getContentJson);
 

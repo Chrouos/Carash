@@ -28,8 +28,10 @@ let hostname = configCrypto.config.HOSTNAME || 'localhost';
 // chromadb_content.checkPeek()
 
 // -------------------- routers list
-const chatGPT = require('./routers/chatGPTRouter')
-app.use(chatGPT);
+const chatGPTRouter = require('./routers/ChatGPTRouter')
+const pythonRouter = require('./routers/PythonRouter');
+app.use(chatGPTRouter);
+app.use(pythonRouter);
 
 
 // 檢查每個網絡接口，並尋找 IPv4 地址

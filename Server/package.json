@@ -19,6 +19,7 @@
     "crypto-js": "^4.1.1",
     "express": "^4.18.2",
     "mysql": "^2.18.1",
-    "openai": "^3.3.0"
+    "openai": "^3.3.0",
+    "python-shell": "^5.0.0"
   }
 }
