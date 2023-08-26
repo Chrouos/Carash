@@ -9,7 +9,7 @@
 *.log
 /Server/lawsnote_project/log
 __pycache__/
-
+/node_modules
 
 /.pnp
 .pnp.js

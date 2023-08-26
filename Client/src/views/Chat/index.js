@@ -3,7 +3,7 @@ import './styles.css';
 
 import React, { useState, useRef } from "react";
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined } from '@ant-design/icons';
-import { Layout, Menu, Button, theme, Col, Row, Input, Form } from "antd";
+import { Layout, Menu, Button, theme, Col, Row, Input, Form, Modal } from "antd";
 const { Content, Sider, Header } = Layout;
 const { TextArea } = Input;
 
@@ -45,6 +45,10 @@ function Chat() {
   const [currentTitle, setCurrentTitle] = useState(""); // + Title
   const [currentIds, setCurrentIds] = useState(null); // + Ids
 
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState("");
+
   // + Items
   const {
     token: { colorBgContainer },
@@ -62,7 +66,7 @@ function Chat() {
   const enterChatValue = async () => {
 
     // - 防呆：防止二次輸入
-    if ( enterStatus == false ){ return ;}
+    if (enterStatus == false) { return; }
     setEnterStatus(false);
 
     // - 傳送給 API 的內容
@@ -72,14 +76,14 @@ function Chat() {
       "title": currentTitle,
       "totalContent": chatContent,
     }
-    if (currentIds){
+    if (currentIds) {
       request['ids'] = currentIds;
     }
 
     // - 使用者先輸入內容後的顯示畫面
-    setChatContent(prevContent => [ ...prevContent,
-      { character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
-      { character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
+    setChatContent(prevContent => [...prevContent,
+    { character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
+    { character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
     );
     setChatInputValue(null);
 
@@ -103,7 +107,7 @@ function Chat() {
 
         // - 防呆結束：防止二次輸入
         setEnterStatus(true);
-        
+
       })
       .then(() => {
         fetchingTitle();
@@ -132,7 +136,7 @@ function Chat() {
           }
         })
 
-        setTitlesSider(newTitleSider);   
+        setTitlesSider(newTitleSider);
 
       })
       .catch(error => console.error('Error fetching data:', error));
@@ -190,27 +194,58 @@ function Chat() {
   // -------------------- 一次輸出 Json 紀錄
   const RenderFieldValue = () => {
     return Object.entries(incidentJsonSiderValue).map(([key, value]) => {
-        return (
-          <Form.Item key={key}>
-            <label htmlFor={key}>{key}</label>
-            <Input
-              id={key}
-              name={key}
-              placeholder={`currently unknown .... `}
-              disabled
-              value={value}
-            />
-          </Form.Item>
-        );
+      return (
+        <Form.Item key={key}>
+          <label htmlFor={key}>{key}</label>
+          <Input
+            id={key}
+            name={key}
+            placeholder={`currently unknown .... `}
+            disabled
+            value={value}
+          />
+        </Form.Item>
+      );
     });
   };
 
-  
+  // ------------------ 預測金額頁面
+  const showPredict = async () => {
+    const request = {
+      "happened": incidentJsonSiderValue.事發經過,
+      "incidentJson": incidentJsonSiderValue
+    }
+
+    await axios
+      .post('/python/save_predictor_file', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+        console.log(response);
+      })
+      .catch(error => console.error('Error save_predictor_file:', error));
+
+    await axios
+      .post('/python/predictor_money', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+        setModalContent("predicrt money is " + response.data.predictor_money);
+      })
+      .catch(error => console.error('Error fetching data:', error));
+
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        enterChatValue();
+      e.preventDefault();
+      enterChatValue();
     }
   };
 
@@ -218,7 +253,7 @@ function Chat() {
   React.useEffect(() => {
     fetchingTitle();
   }, []) // 空陣列表示只在組件掛載時執行一次
-  
+
   React.useEffect(() => {
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     RenderChatBoxes();
@@ -232,39 +267,39 @@ function Chat() {
 
         {/* Left sider */}
         <Sider width={200} collapsed={collapsed} style={{ background: colorBgContainer, overflow: 'auto', height: '100%' }}>
-        <Menu
-          mode="inline"
-          items={titlesSider}
-          onClick={(e) => {fetchingContentJson(e.key)}}
-        />
+          <Menu
+            mode="inline"
+            items={titlesSider}
+            onClick={(e) => { fetchingContentJson(e.key) }}
+          />
         </Sider>
 
         {/* Right Content */}
         <Content style={{ padding: '0 24px', minHeight: 280 }}>
 
-        <Header style={{ padding: 0, background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignContent: 'center' }}>
+          <Header style={{ padding: 0, background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignContent: 'center' }}>
 
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Button type="text" 
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
-              style={{fontSize: '16px', width: 64, height: 64}}
-            />
-            <label htmlFor="title">標題： </label>
-            <Input
-              id="title"
-              value={currentTitle} 
-              onChange={(e) => setCurrentTitle(e.target.value)} 
-              placeholder='Please enter this chat title, default = testChatBox' 
-              style={{width: '350px'}} 
-            />
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <Button type="text"
+                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                onClick={() => setCollapsed(!collapsed)}
+                style={{ fontSize: '16px', width: 64, height: 64 }}
+              />
+              <label htmlFor="title">標題： </label>
+              <Input
+                id="title"
+                value={currentTitle}
+                onChange={(e) => setCurrentTitle(e.target.value)}
+                placeholder='Please enter this chat title, default = testChatBox'
+                style={{ width: '350px' }}
+              />
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', paddingRight: '3%' }}>
-            <Button style={{width: '150px'}} onClick={() => {createNewChat()}}>New Chat</Button>
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', paddingRight: '3%' }}>
+              <Button style={{ width: '150px' }} onClick={() => { createNewChat() }}>New Chat</Button>
+            </div>
 
-        </Header>
+          </Header>
 
 
           <div style={{ padding: '24px 0 0 0', marginTop: 8, height: '90%' }}>
@@ -276,11 +311,20 @@ function Chat() {
                   <Form form={caseDetailForm} layout="vertical" >
 
                     {<RenderFieldValue />}
-                    
+
 
                     <div style={{ textAlign: 'center' }}>
-                      <Button icon={<EnterOutlined />} > 確認輸出內容 </Button>
+                      <Button icon={<EnterOutlined />} onClick={showPredict}> 確認輸出內容 </Button>
+                      <Modal
+                        title="testModal"
+                        open={isModalOpen}
+                        onOk={handleModalClose}
+                        onCancel={handleModalClose}
+                      >
+                        <p>{modalContent}</p>
+                      </Modal>
                     </div>
+
                   </Form>
                 </div>
               </Col>
@@ -297,7 +341,7 @@ function Chat() {
                           placeholder='Please Write Here.'
                           value={chatInputValue}
                           onChange={(e) => setChatInputValue(e.target.value)}
-                          onKeyDown={handleKeyDown}/>
+                          onKeyDown={handleKeyDown} />
                       </Col>
                       <Col span={1} >
                         <Button icon={<EnterOutlined />} style={{ height: '100%' }} onClick={enterChatValue} ></Button>
