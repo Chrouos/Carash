@@ -110,21 +110,18 @@ class ChromaDB_Tools {
     async connecting( ) {
 
         // - embedding function ~  @xenova/transformers
-        const embedder = new TransformersEmbeddingFunction();
-        const collection = await this.client.getOrCreateCollection({
-            name: this.chromaName, 
-            embeddingFunction: embedder
-        })
-
-        // - embedding function ~ OpenAI
-        // const embedder = new OpenAIEmbeddingFunction({openai_api_key: this.configCrypto.config.GPT_KEY})
-        // const collection = this.client.getOrCreateCollection({
-        //     name: this.chromaName,
-        //     metadata: {
-        //         "description": "For Carash Database: " + this.chromaName
-        //     },
+        // const embedder = new TransformersEmbeddingFunction();
+        // const collection = await this.client.getOrCreateCollection({
+        //     name: this.chromaName, 
         //     embeddingFunction: embedder
         // })
+
+        // - embedding function ~ OpenAI
+        const embedder = new OpenAIEmbeddingFunction({openai_api_key: this.configCrypto.config.GPT_KEY})
+        const collection = this.client.getOrCreateCollection({
+            name: this.chromaName,
+            embeddingFunction: embedder
+        })
 
         return collection
     }

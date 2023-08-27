@@ -252,6 +252,20 @@ exports.templateJSON = async (req, res) => {
     }
 };
 
+// -------------------- 尋找相似判決
+exports.similarVerdict = async(req, res) => {
+    try {
+        var responseData = {};
+        
+        res.status(200).send(responseData);
+    }
+    catch (error) {
+        console.error("[similarVerdict] Error :", error.message || error);
+        res.status(500).send(`[similarVerdict] Error : ${error.message || error}`);
+    }
+}
+
+
 
 /*
 

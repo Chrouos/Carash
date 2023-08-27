@@ -192,7 +192,11 @@ function Chat() {
         headers: authHeader(),
       })
       .then(response => {
-        setModalContent("預測金額為：" + response.data.predictor_money);
+        setModalContent(
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <p>預測金額為： {response.data.predictor_money}</p>
+          </div>
+        );
       })
       .catch(error => console.error('Error fetching data:', error));
 
@@ -247,8 +251,6 @@ function Chat() {
       );
     });
   };
-
-
 
   const handleModalClose = () => {
     setIsModalOpen(false);
@@ -333,7 +335,7 @@ function Chat() {
                         onOk={handleModalClose}
                         onCancel={handleModalClose}
                       >
-                        <p>{modalContent}</p>
+                        {modalContent}
                       </Modal>
                     </div>
 
