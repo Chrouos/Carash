@@ -3,6 +3,7 @@ const CryptoJS = require('crypto-js')
 const ConfigCrypto = require('../tools/ConfigCrypto')
 const ChromaDB_Tools = require('../tools/ChromaTools');
 
+// -------------------- 測試 GPT
 exports.chat_test = async (req, res) => {
     // + 與前端的聊天測試
 
@@ -38,6 +39,7 @@ exports.chat_test = async (req, res) => {
     }
 };
 
+// -------------------- 獲得所有對話紀錄的名稱
 exports.getTitle = async(req, res) => {
     try {
         const chromadb = new ChromaDB_Tools("Traffic_Advisory");
@@ -54,6 +56,7 @@ exports.getTitle = async(req, res) => {
     }
 }
 
+// -------------------- 獲得指定對話紀錄的內容和JSON
 exports.getContentJson = async(req, res) => {
     try {
 
@@ -90,7 +93,7 @@ exports.getContentJson = async(req, res) => {
     }
 }
 
-
+// -------------------- 對話模板
 exports.templateJSON = async (req, res) => {
     /*
         ResponseData.

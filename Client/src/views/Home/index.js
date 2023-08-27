@@ -14,7 +14,7 @@ function Home() {
     {value: 5, label: '109年9月08日／小客車／過失傷害罪／四肢多處擦傷'}
   ])
 
-  const [verdicTableValues, ] = React.useState([
+  const [verdictTableValues, ] = React.useState([
     {key: 1, time: '108年4月30日', car: '重型機車', crime: '傷害逃逸', injury: '側脛骨平台開放性骨折、右側顱骨骨折併額、顳葉硬腦膜外血腫', tags:['tags1', 'tags2']},
     {key: 2, time: '108年7月21日', car: '中型機車', crime: '傷害逃逸', injury: '四肢多處擦傷', tags:['']},
     {key: 3, time: '109年3月14日', car: '中型機車', crime: '過失傷害罪', injury: '左側股骨粗隆間閉鎖性骨折', tags:['']},
@@ -39,7 +39,7 @@ function Home() {
       </div>
 
       <div style={{padding: '3% 0 0 0 '}}>
-        <Table style={{width: '100%'}} dataSource={verdicTableValues} >
+        <Table style={{width: '100%'}} dataSource={verdictTableValues} >
           <Column title="Time" dataIndex="time" key="time" />
           <Column title="Car" dataIndex="car" key="car" />
           <Column title="Crime" dataIndex="crime" key="crime" />

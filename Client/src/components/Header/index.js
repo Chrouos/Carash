@@ -22,7 +22,7 @@ const HeaderComponent = () => {
               onClick={ (e) => selectedKeyToLink(e.key) }
         
           items={[
-            {key: '/agent', label: 'Agent'},
+            // {key: '/agent', label: 'Agent'},
             {key: '/chat', label: 'Chat'},
             {key: '/', label: 'Home'},
           ]}

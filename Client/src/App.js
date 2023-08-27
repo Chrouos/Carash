@@ -24,7 +24,7 @@ function App() {
         <Routes>
           <Route path="/chat" element={ <Chat /> } />
           <Route path="/" element={ <Home /> } />
-          <Route path="/agent" element={ <Agent /> } />
+          {/* <Route path="/agent" element={ <Agent /> } /> */}
         </Routes>
         
         <FooterComponent></FooterComponent>

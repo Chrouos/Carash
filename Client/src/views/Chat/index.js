@@ -161,6 +161,45 @@ function Chat() {
       .catch(error => console.error('Error fetching data:', error));
   };
 
+  // -------------------- 預測金額頁面
+  const showPredict = async () => {
+
+    setIsModalOpen(true);
+    setModalContent(
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <span>請等待... 正在計算中... {'\u00A0\u00A0\u00A0\u00A0'}</span>
+        <LoadingOutlined style={{ fontSize: 24 }} spin />
+      </div>
+    );
+
+    const request = {
+      "happened": incidentJsonSiderValue.事發經過,
+      "incidentJson": incidentJsonSiderValue,
+      "ids": currentIds
+    }
+  
+    const saveFile = await axios
+      .post('/python/save_predictor_file', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+        // console.log(response);
+      })
+      .catch(error => console.error('Error save_predictor_file:', error));
+
+    const predictorMoney = await axios
+      .post('/python/predictor_money', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+        setModalContent("預測金額為：" + response.data.predictor_money);
+      })
+      .catch(error => console.error('Error fetching data:', error));
+
+    await Promise.all([saveFile, predictorMoney]);    // * 若嘗試使用 await_1, await_2 的方式會導致不安全或錯誤，參考: https://stackoverflow.com/questions/50557259/can-i-use-multiple-await-in-an-async-functions-try-catch-block
+    
+  };
+
   const createNewChat = () => {
     setCurrentIds(null);
     setCurrentTitle(null);
@@ -209,44 +248,7 @@ function Chat() {
     });
   };
 
-  // -------------------- 預測金額頁面
-  const showPredict = async () => {
 
-    setIsModalOpen(true);
-    setModalContent(
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <span>請等待... 正在計算中... {'\u00A0\u00A0\u00A0\u00A0'}</span>
-        <LoadingOutlined style={{ fontSize: 24 }} spin />
-      </div>
-    );
-
-    const request = {
-      "happened": incidentJsonSiderValue.事發經過,
-      "incidentJson": incidentJsonSiderValue
-    }
-
-    const saveFile = await axios
-      .post('/python/save_predictor_file', request, {
-        headers: authHeader(),
-      })
-      .then(response => {
-        // console.log(response);
-      })
-      .catch(error => console.error('Error save_predictor_file:', error));
-
-    const predictorMoney = await axios
-      .post('/python/predictor_money', request, {
-        headers: authHeader(),
-      })
-      .then(response => {
-        setModalContent("預測金額為：" + response.data.predictor_money);
-      })
-      .catch(error => console.error('Error fetching data:', error));
-
-    await Promise.all([saveFile, predictorMoney]);    // * 若嘗試使用 await_1, await_2 的方式會導致不安全或錯誤，參考: https://stackoverflow.com/questions/50557259/can-i-use-multiple-await-in-an-async-functions-try-catch-block
-
-    
-  };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
