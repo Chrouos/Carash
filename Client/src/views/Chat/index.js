@@ -349,7 +349,10 @@ function Chat() {
                     <div style={{ textAlign: 'center' }}>
                       <Button icon={<EnterOutlined />} onClick={showPredict}> 確認輸出內容 </Button>
                       <Modal
-                        title="預測金額"
+                        width={'65%'}
+                        bodyStyle={{height: '80vh', overflowY: 'auto'}}
+                        style={{position: 'absolute', left: '15%', top: '5%'}}
+                        title="預測金額與相似判決"
                         open={isModalOpen}
                         onOk={handleModalClose}
                         onCancel={handleModalClose}
