@@ -38,3 +38,25 @@ docker-compose up -d --build
 npm install --save chromadb 
 ```
 
+### Docker 建立
+For Carash-server.
+```shell
+docker build -t carash-server . # 建立 Image
+docker run --gpus all -d -p 8280:8280 --name carash-server carash-server # 指定 port, 名稱 
+docker exec -it carash-server /bin/bash # 啟動
+
+# 查看 logs.
+docker logs carash-server
+```
+
+
+For Carash-client.
+```shell
+docker build -t carash-client . # 建立 Image
+docker run -d -p 8230:8230 --name carash-client carash-client # 指定 port, 名稱 
+docker exec -it carash-client /bin/bash # 啟動
+
+# 查看 logs.
+docker logs carash-client
+```
+
