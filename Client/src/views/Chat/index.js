@@ -3,9 +3,11 @@ import './styles.css';
 
 import React, { useState, useRef } from "react";
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined } from '@ant-design/icons';
-import { Layout, Menu, Button, theme, Col, Row, Input, Form, Modal } from "antd";
+import { Layout, Menu, Button, theme, Col, Row, Input, Form, Modal, Table } from "antd";
+const { Column } = Table;
 const { Content, Sider, Header } = Layout;
 const { TextArea } = Input;
+
 
 import axios from '../../utils/axios';
 import authHeader from '../../store/auth-header';
@@ -47,8 +49,10 @@ function Chat() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState("");
+  const [modalPredictorMoney, setModalPredictorMoney] = useState("");
+  const [modalSimilarVerdict, setModalSimilarVerdict] = useState("");
 
+  
   // + Items
   const {
     token: { colorBgContainer },
@@ -165,11 +169,11 @@ function Chat() {
   const showPredict = async () => {
 
     setIsModalOpen(true);
-    setModalContent(
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+    setModalPredictorMoney(
+      <>
         <span>請等待... 正在計算中... {'\u00A0\u00A0\u00A0\u00A0'}</span>
         <LoadingOutlined style={{ fontSize: 24 }} spin />
-      </div>
+      </>
     );
 
     const request = {
@@ -177,31 +181,46 @@ function Chat() {
       "incidentJson": incidentJsonSiderValue,
       "ids": currentIds
     }
-  
-    const saveFile = await axios
-      .post('/python/save_predictor_file', request, {
-        headers: authHeader(),
-      })
-      .then(response => {
-        // console.log(response);
-      })
-      .catch(error => console.error('Error save_predictor_file:', error));
 
-    const predictorMoney = await axios
-      .post('/python/predictor_money', request, {
-        headers: authHeader(),
-      })
-      .then(response => {
-        setModalContent(
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <p>預測金額為： {response.data.predictor_money}</p>
-          </div>
-        );
-      })
-      .catch(error => console.error('Error fetching data:', error));
+    try{ 
+      await axios
+        .post('/chatGPT/similarVerdict', request, {
+          headers: authHeader(),
+        })
+        .then(response => { 
+          const processResponse = response.data.map((item) => {return {key: item.id,...item}})
+        
+          setModalSimilarVerdict(
+            <>
+              <Table style={{width: '100%', marginTop: '5%'}} dataSource={processResponse} >
+                <Column title="Happened" dataIndex="happened" key="happened" />
+                <Column title="Money" dataIndex="money" key="money" />
+              </Table>
+            </>
+          )
+        })
+        .catch(e => console.log('Error in similarVerdict:', e));
 
-    await Promise.all([saveFile, predictorMoney]);    // * 若嘗試使用 await_1, await_2 的方式會導致不安全或錯誤，參考: https://stackoverflow.com/questions/50557259/can-i-use-multiple-await-in-an-async-functions-try-catch-block
-    
+      const saveFile = axios.post('/python/save_predictor_file', request, { headers: authHeader() }).catch(e => console.log('Error in saveFile:', e));
+      const predictorMoney = axios.post('/python/predictor_money', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
+      
+      await Promise.all([saveFile, predictorMoney])
+        .then((responses) => {
+
+          const response_predictorMoney = responses[1];
+          setModalPredictorMoney(
+              <p>預測金額為： {response_predictorMoney.data.predictor_money}</p>
+          );
+          
+        })
+      .catch((error) => {
+        console.log("🚀 ~ file: index.js:207 ~ showPredict ~ error:", error)
+      });
+    } 
+    catch(error) {
+      console.log("🚀 ~ file: index.js:231 ~ showPredict ~ error:", error)
+    }
+ 
   };
 
   const createNewChat = () => {
@@ -335,7 +354,11 @@ function Chat() {
                         onOk={handleModalClose}
                         onCancel={handleModalClose}
                       >
-                        {modalContent}
+                        <div>
+                          {modalPredictorMoney}
+                          <br/>
+                          {modalSimilarVerdict}
+                        </div>
                       </Modal>
                     </div>
 

@@ -255,7 +255,25 @@ exports.templateJSON = async (req, res) => {
 // -------------------- 尋找相似判決
 exports.similarVerdict = async(req, res) => {
     try {
+
+        const requestData = req.body;
         var responseData = {};
+
+        // - 呼叫資料庫 ChromaDB
+        const chromadb = new ChromaDB_Tools("Traffic_Advisory_Final");
+        const results = await chromadb.query({
+            nResults: 5, 
+            queryTexts: [requestData['happened']]
+        }) 
+
+        const combined = results.ids[0].map((id, index) => {
+            return {
+              id: id,
+              happened: results.metadatas[0][index].happened,
+              money: results.metadatas[0][index].money
+            };
+        });
+        responseData = combined;
         
         res.status(200).send(responseData);
     }
