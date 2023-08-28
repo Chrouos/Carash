@@ -52,7 +52,7 @@ function Chat() {
   const [modalPredictorMoney, setModalPredictorMoney] = useState("");
   const [modalSimilarVerdict, setModalSimilarVerdict] = useState("");
 
-  
+
   // + Items
   const {
     token: { colorBgContainer },
@@ -182,17 +182,17 @@ function Chat() {
       "ids": currentIds
     }
 
-    try{ 
+    try {
       await axios
         .post('/chatGPT/similarVerdict', request, {
           headers: authHeader(),
         })
-        .then(response => { 
-          const processResponse = response.data.map((item) => {return {key: item.id,...item}})
-        
+        .then(response => {
+          const processResponse = response.data.map((item) => { return { key: item.id, ...item } })
+
           setModalSimilarVerdict(
             <>
-              <Table style={{width: '100%', marginTop: '5%'}} dataSource={processResponse} >
+              <Table style={{ width: '100%', marginTop: '5%' }} dataSource={processResponse} >
                 <Column title="Happened" dataIndex="happened" key="happened" />
                 <Column title="Money" dataIndex="money" key="money" />
               </Table>
@@ -203,24 +203,25 @@ function Chat() {
 
       const saveFile = axios.post('/python/save_predictor_file', request, { headers: authHeader() }).catch(e => console.log('Error in saveFile:', e));
       const predictorMoney = axios.post('/python/predictor_money', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
-      
-      await Promise.all([saveFile, predictorMoney])
+      const moneyfloor = Math.floor(predictorMoney);
+
+      await Promise.all([saveFile, moneyfloor])
         .then((responses) => {
 
           const response_predictorMoney = responses[1];
           setModalPredictorMoney(
-              <p>預測金額為： {response_predictorMoney.data.predictor_money}</p>
+            <p>預測金額為： {response_predictorMoney.data.predictor_money}</p>
           );
-          
+
         })
-      .catch((error) => {
-        console.log("🚀 ~ file: index.js:207 ~ showPredict ~ error:", error)
-      });
-    } 
-    catch(error) {
+        .catch((error) => {
+          console.log("🚀 ~ file: index.js:207 ~ showPredict ~ error:", error)
+        });
+    }
+    catch (error) {
       console.log("🚀 ~ file: index.js:231 ~ showPredict ~ error:", error)
     }
- 
+
   };
 
   const createNewChat = () => {
@@ -350,8 +351,8 @@ function Chat() {
                       <Button icon={<EnterOutlined />} onClick={showPredict}> 確認輸出內容 </Button>
                       <Modal
                         width={'65%'}
-                        bodyStyle={{height: '80vh', overflowY: 'auto'}}
-                        style={{position: 'absolute', left: '15%', top: '5%'}}
+                        bodyStyle={{ height: '80vh', overflowY: 'auto' }}
+                        style={{ position: 'absolute', left: '15%', top: '5%' }}
                         title="預測金額與相似判決"
                         open={isModalOpen}
                         onOk={handleModalClose}
@@ -359,7 +360,7 @@ function Chat() {
                       >
                         <div>
                           {modalPredictorMoney}
-                          <br/>
+                          <br />
                           {modalSimilarVerdict}
                         </div>
                       </Modal>

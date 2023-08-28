@@ -2,34 +2,38 @@ import React from "react";
 import './styles.css';
 
 import { Layout, Menu } from "antd";
-const {Header} = Layout;
+const { Header } = Layout;
 
 const HeaderComponent = () => {
-  
-  
+
+
   const selectedKeyToLink = (selectedKey) => {
-    window.location.href = '/#' + selectedKey ;
+    window.location.href = '/#' + selectedKey;
   }
-  
-    
-  return(
-      <Header className="header" >
-        <div style={{width: '-webkit-fill-available', fontSize: '120%' }} >Web Intelligence and Data Mining Lab</div>
 
-        <Menu  className="header-menu"
-              mode="horizontal" 
-              defaultSelectedKeys={'/' + [window.location.href.split('/')[4]]} 
-              onClick={ (e) => selectedKeyToLink(e.key) }
-        
-          items={[
-            // {key: '/agent', label: 'Agent'},
-            {key: '/chat', label: 'Chat'},
-            {key: '/', label: 'Home'},
-          ]}
-        >
-        </Menu>
 
-      </Header>
+  return (
+    <Header className="header" >
+
+      <div>
+        <img src="./ccg_icon.png" style={{ maxWidth: '16px', maxHeight: '64px' }} />
+      </div>
+      <div style={{ width: '-webkit-fill-available', fontSize: '120%' }} >交通事故法律諮詢代理人 - CollisionCare Guide </div>
+
+      <Menu className="header-menu"
+        mode="horizontal"
+        defaultSelectedKeys={'/' + [window.location.href.split('/')[4]]}
+        onClick={(e) => selectedKeyToLink(e.key)}
+
+        items={[
+          // {key: '/agent', label: 'Agent'},
+          { key: '/chat', label: 'Chat' },
+          { key: '/', label: 'Home' },
+        ]}
+      >
+      </Menu>
+
+    </Header>
   )
 }
 
