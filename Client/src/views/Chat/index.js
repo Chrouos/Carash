@@ -203,7 +203,7 @@ function Chat() {
 
       const saveFile = axios.post('/python/save_predictor_file', request, { headers: authHeader() }).catch(e => console.log('Error in saveFile:', e));
       const predictorMoney = axios.post('/python/predictor_money', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
-      const moneyfloor = Math.floor(predictorMoney);
+      const moneyfloor = parseInt(predictorMoney);
 
       await Promise.all([saveFile, moneyfloor])
         .then((responses) => {
