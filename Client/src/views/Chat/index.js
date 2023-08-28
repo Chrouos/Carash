@@ -203,14 +203,13 @@ function Chat() {
 
       const saveFile = axios.post('/python/save_predictor_file', request, { headers: authHeader() }).catch(e => console.log('Error in saveFile:', e));
       const predictorMoney = axios.post('/python/predictor_money', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
-      const moneyfloor = parseInt(predictorMoney);
 
-      await Promise.all([saveFile, moneyfloor])
+      await Promise.all([saveFile, predictorMoney])
         .then((responses) => {
 
           const response_predictorMoney = responses[1];
           setModalPredictorMoney(
-            <p>預測金額為： {response_predictorMoney.data.predictor_money}</p>
+            <p>預測金額為： {parseInt(response_predictorMoney.data.predictor_money)}</p>
           );
 
         })
