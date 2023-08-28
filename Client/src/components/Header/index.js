@@ -15,10 +15,9 @@ const HeaderComponent = () => {
   return (
     <Header className="header" >
 
-      <div>
-        <img src="./ccg_icon.png" style={{ maxWidth: '16px', maxHeight: '64px' }} />
+      <div style={{ width: '-webkit-fill-available', fontSize: '120%', display: 'flex' }} > 
+        <img src="ccg_icon.png" style={{  maxHeight: '64px' }} /> 交通事故法律諮詢代理人 - CollisionCare Guide 
       </div>
-      <div style={{ width: '-webkit-fill-available', fontSize: '120%' }} >交通事故法律諮詢代理人 - CollisionCare Guide </div>
 
       <Menu className="header-menu"
         mode="horizontal"
