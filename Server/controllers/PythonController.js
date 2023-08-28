@@ -3,14 +3,14 @@ const ChromaDB_Tools = require('../tools/ChromaTools');
 const fs = require('fs');
 
 // -------------------- 預測金額
-exports.predictor_money = async(req, res) => {
+exports.predictor_money = async (req, res) => {
     try {
 
         // - 整理 request data
-        const requestData = req.body;  
+        const requestData = req.body;
 
         // - 回傳的資料
-        var responseData = {predictor_money: 0};  
+        var responseData = { predictor_money: 0 };
 
         // - 傳送給 python 的檔案
         let options = {
@@ -21,14 +21,14 @@ exports.predictor_money = async(req, res) => {
         // - 執行 Python 檔案 (由目錄開始: ./Server/...)
         await PythonShell.run('Generate_First_Stage_result.py', options)
             .then(response => {
-                responseData['predictor_money'] = JSON.parse(response[response.length - 1 ])[0]
-                
+                responseData['predictor_money'] = JSON.parse(response[response.length - 1])[0]
+
             })
             .catch(err => {
                 console.error("Python Error: ", err);
             });
 
-        requestData.incidentJson['預測金額'] = responseData['predictor_money']   
+        requestData.incidentJson['預測金額'] = parseInt(responseData['predictor_money']);
 
         // - 儲存到資料庫
         const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
@@ -48,7 +48,7 @@ exports.predictor_money = async(req, res) => {
 }
 
 // -------------------- 儲存要預測的檔案
-exports.save_predictor_file = async(req, res) => {
+exports.save_predictor_file = async (req, res) => {
     try {
         /*
             request:
@@ -57,14 +57,14 @@ exports.save_predictor_file = async(req, res) => {
         */
 
         // - 整理 request data
-        const requestData = req.body;  
+        const requestData = req.body;
 
         // - 儲存準備預測的資料放入: lawsnote_project/data/formal_test.json
         var formal_test_write = {
             money: 0,
             happened: requestData.happened,
             incidentJson: requestData.incidentJson
-        }   
+        }
 
         // - 儲存要讀取的檔案
         await fs.promises.writeFile('./lawsnote_project/data/formal_test.json', JSON.stringify(formal_test_write)); // + fs.writeFile 本身是使用回呼（callback）的方式進行非同步操作，並不回傳 Promise => (fs.promises.writeFile)
