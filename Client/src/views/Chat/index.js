@@ -51,6 +51,7 @@ function Chat() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalPredictorMoney, setModalPredictorMoney] = useState("");
   const [modalSimilarVerdict, setModalSimilarVerdict] = useState("");
+  const [modalGethappened, setModalGethappened] = useState("");
 
 
   // + Items
@@ -203,14 +204,20 @@ function Chat() {
 
       const saveFile = axios.post('/python/save_predictor_file', request, { headers: authHeader() }).catch(e => console.log('Error in saveFile:', e));
       const predictorMoney = axios.post('/python/predictor_money', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
+      const gethappened = axios.post('/chatgpt/gethappened', request, { headers: authHeader() }).catch(e => console.log('Error in getheappened:', e))
 
-      await Promise.all([saveFile, predictorMoney])
+      await Promise.all([saveFile, predictorMoney, gethappened])
         .then((responses) => {
 
           const response_predictorMoney = responses[1];
           setModalPredictorMoney(
             <p>預測金額為： {parseInt(response_predictorMoney.data.predictor_money)}</p>
           );
+
+          const response_gethappened = responses[2];
+          setModalGethappened(
+            <p>事發經過 : {response_gethappened.data}</p>
+          )
 
         })
         .catch((error) => {
@@ -355,10 +362,13 @@ function Chat() {
                         title="預測金額與相似判決"
                         open={isModalOpen}
                         onOk={handleModalClose}
+                        onClick={handleModalClose}
                         onCancel={handleModalClose}
                       >
                         <div>
                           {modalPredictorMoney}
+                          <br />
+                          {modalGethappened}
                           <br />
                           {modalSimilarVerdict}
                         </div>
