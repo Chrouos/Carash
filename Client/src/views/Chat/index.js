@@ -46,6 +46,7 @@ function Chat() {
   const [incidentJsonSiderValue, setIncidentJsonSiderValue] = useState(incidentTemplate); // + incident Json
   const [currentTitle, setCurrentTitle] = useState(""); // + Title
   const [currentIds, setCurrentIds] = useState(null); // + Ids
+  const [questionValue, setQuestionvalue] = useState("");
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,6 +78,7 @@ function Chat() {
     // - 傳送給 API 的內容
     var request = {
       "content": chatInputValue,
+      "question": questionValue,
       "incidentJson": incidentJsonSiderValue,
       "title": currentTitle,
       "totalContent": chatContent,
@@ -101,6 +103,7 @@ function Chat() {
         // - 修改狀態
         setCurrentIds(response.data.ids);
         setCurrentTitle(response.data.title);
+        setQuestionvalue(response.data.question);
 
         // - 對話紀錄的更改
         const responseContent = response.data.totalContent;

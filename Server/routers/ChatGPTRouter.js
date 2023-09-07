@@ -11,5 +11,6 @@ app.post('/chatGPT/templateJSON', chatGPTController.templateJSON);
 app.post('/chatGPT/getTitle', chatGPTController.getTitle);
 app.post('/chatGPT/getContentJson', chatGPTController.getContentJson);
 app.post('/chatGPT/similarVerdict', chatGPTController.similarVerdict);
+app.post('/chatGPT/gethappened', chatGPTController.gethappened);
 
 module.exports = app;
