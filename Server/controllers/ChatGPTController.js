@@ -40,12 +40,12 @@ exports.chat_test = async (req, res) => {
 };
 
 // -------------------- 獲得所有對話紀錄的名稱
-exports.getTitle = async(req, res) => {
+exports.getTitle = async (req, res) => {
     try {
         const chromadb = new ChromaDB_Tools("Traffic_Advisory");
         const titles = await chromadb.peek();
         const responseData = titles.ids.map((id, index) => {
-            return Object.assign({}, {id: id}, titles.metadatas[index]);
+            return Object.assign({}, { id: id }, titles.metadatas[index]);
         });
 
         res.status(200).send(responseData);
@@ -57,7 +57,7 @@ exports.getTitle = async(req, res) => {
 }
 
 // -------------------- 獲得指定對話紀錄的內容和JSON
-exports.getContentJson = async(req, res) => {
+exports.getContentJson = async (req, res) => {
     try {
 
         var responseData = {};
@@ -79,12 +79,12 @@ exports.getContentJson = async(req, res) => {
         const response = await chromadb.get({
             ids: req.body.ids
         });
-        
+
         // - 準備輸出內容
         responseData.totalContent = responseContent.metadatas;
         responseData.incidentJson = responseJson.metadatas[0];
         responseData.title = response.documents;
-        
+
         res.status(200).send(responseData);
     }
     catch (error) {
@@ -98,6 +98,7 @@ exports.templateJSON = async (req, res) => {
     /*
         ResponseData.
             content,
+            question,
             incidentJson,
             title,
             ids,
@@ -116,7 +117,7 @@ exports.templateJSON = async (req, res) => {
         const userContent = req.body.content;
 
         // - 整理 request data
-        const requestData = req.body;   
+        const requestData = req.body;
         const notNullCount = Object.values(responseData.incidentJson).filter(value => value !== "").length; // 目前不是 Null 的值
 
         // - 呼叫資料庫 ChromaDB
@@ -125,7 +126,7 @@ exports.templateJSON = async (req, res) => {
         const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
 
         // - 取得台灣的即時時間
-        const taiwanTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"});
+        const taiwanTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" });
         const createTime = new Date(taiwanTime).toISOString();
 
         // - 目前還未有任何資訊: 第一次對話
@@ -155,7 +156,7 @@ exports.templateJSON = async (req, res) => {
 
             responseData.ids = await chromadb.nextIds();
             chromadb_content.add({
-                metadatas: [{ids: responseData.ids, character: 'chatBot',  value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: createTime}],
+                metadatas: [{ ids: responseData.ids, character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: createTime }],
                 documents: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
             })
         }
@@ -164,7 +165,8 @@ exports.templateJSON = async (req, res) => {
         else {
 
             const tidyMessage = [
-                { "role": "system", "content": "你是一位事件擷取機器人，現在有一個描述是針對以下json格式中空白value的回答，請加入以下整個Json，並且依照Json格式回覆，若沒有資料請保留空白值，請不要更改或填入不相關的key中。若是我告訴你'不知道'，才填入'未知'，不然不能填入。我是原告的角度。" + JSON.stringify(requestData.incidentJson) },
+                { "role": "system", "content": "你是一位事件擷取機器人，現在有一問題與該問題的敘述和一個Json格式，請你將資訊歸納以及加入以下完整Json格式，若敘述中沒有提到的資訊則將此問題欄位留空，若敘述回答不知道則將此Json格式中的此問題欄位填入'未知'。你必須回答完整以下的Json格式且只回答Json格式，不要回答其餘無關事項。我是原告。" + JSON.stringify(requestData.incidentJson) },
+                { "role": "assistant", "content": requestData.question },
                 { "role": "user", "content": requestData.content } // 把目前車禍相關的 JSON 與 使用者回覆串接
             ]
 
@@ -188,7 +190,7 @@ exports.templateJSON = async (req, res) => {
 
         // - 最後 GPT 的回覆格式
         const questionMessage = [
-            { "role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中第一個沒有value的key，產生一個詢問此key的問題。請不要回答問題以外的東西，你只需要提問就好。若是整個JSON格式滿了，你沒有問題可以問，你就必須要回答'請點擊確認輸出內容。'。" },
+            { "role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中依序檢查首個空值value的key，產生一個詢問此key的問題。若是依序檢查JSON格式中沒有空值value或是value為 \"未知 \"，則直接回答 \"請點擊確認輸出內容。\"。請不要回答問題以外的東西，你只需要提問就好，也不要回答無關的問題。" },
             { "role": "user", "content": JSON.stringify(requestData.incidentJson) }
         ]
 
@@ -204,20 +206,20 @@ exports.templateJSON = async (req, res) => {
         const responseContent = gptResponse.data.choices[0].message.content;
 
         // - 回傳結果
-        responseData.content = responseContent;
+        responseData.question = responseContent;
         const newContent = [
-            {ids: responseData.ids, character: 'questioner', value: userContent, createTime: createTime},
-            {ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: createTime}
+            { ids: responseData.ids, character: 'questioner', value: userContent, createTime: createTime },
+            { ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: createTime }
         ]
         responseData.totalContent.push(
-            {ids: responseData.ids,character: 'questioner', value: userContent, createTime: createTime},
-            {ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: createTime});
+            { ids: responseData.ids, character: 'questioner', value: userContent, createTime: createTime },
+            { ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: createTime });
 
         // - 儲存至資料庫內部
-        if (notNullCount === 0){
+        if (notNullCount === 0) {
             chromadb.add({
                 ids: responseData.ids,
-                metadatas: [{title: responseData.title || "testChatBox"}],
+                metadatas: [{ title: responseData.title || "testChatBox" }],
                 documents: responseData.title || "testChatBox"
             })
             chromadb_json.add({
@@ -226,10 +228,10 @@ exports.templateJSON = async (req, res) => {
                 documents: responseData.incidentJson['事發經過']
             })
         }
-        else{
+        else {
             chromadb.update({
                 ids: responseData.ids,
-                metadatas: [{title: responseData.title || "testChatBox"}],
+                metadatas: [{ title: responseData.title || "testChatBox" }],
                 documents: responseData.title || "testChatBox"
             })
             chromadb_json.update({
@@ -238,12 +240,12 @@ exports.templateJSON = async (req, res) => {
                 documents: responseData.incidentJson['事發經過']
             })
         }
-        
+
         chromadb_content.add({
             metadatas: newContent,
             documents: [userContent, responseContent],
         })
-        
+
         res.status(200).send(responseData);
 
     } catch (error) {
@@ -253,7 +255,7 @@ exports.templateJSON = async (req, res) => {
 };
 
 // -------------------- 尋找相似判決
-exports.similarVerdict = async(req, res) => {
+exports.similarVerdict = async (req, res) => {
     try {
 
         const requestData = req.body;
@@ -262,24 +264,62 @@ exports.similarVerdict = async(req, res) => {
         // - 呼叫資料庫 ChromaDB
         const chromadb = new ChromaDB_Tools("Traffic_Advisory_Final");
         const results = await chromadb.query({
-            nResults: 5, 
+            nResults: 5,
             queryTexts: [requestData['happened']]
-        }) 
+        })
 
         const combined = results.ids[0].map((id, index) => {
             return {
-              id: id,
-              happened: results.metadatas[0][index].happened,
-              money: results.metadatas[0][index].money
+                id: id,
+                happened: results.metadatas[0][index].happened,
+                money: results.metadatas[0][index].money
             };
         });
         responseData = combined;
-        
+
         res.status(200).send(responseData);
     }
     catch (error) {
         console.error("[similarVerdict] Error :", error.message || error);
         res.status(500).send(`[similarVerdict] Error : ${error.message || error}`);
+    }
+}
+
+// ----------------- 生成事件經過
+exports.gethappened = async (req, res) => {
+    try {
+
+        const configCrypto = new ConfigCrypto();
+        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
+        const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
+
+        const requsetData = req.body;
+
+        const happenedMessage = [
+            { "role": "system", "content": "以下有一個Json格式表示了整個車禍事實，依照此格式重述整個車禍的經過，原告為第一人稱，只需要講述車禍事實，不用敘述其他無關事實，沒有資料的地方不用敘述，預測金額不用敘述，只需敘述有資料的部分。" },
+            { "role": "user", "content": JSON.stringify(requsetData.incidentJson) },
+        ]
+        console.log("happendMessage : ", happenedMessage);
+
+        const gptResponse = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: happenedMessage,
+            temperature: 0.1,
+            max_tokens: 1024,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+        });
+        console.log("gptResponse : ", gptResponse);
+
+        const responseData = gptResponse.data.choices[0].message.content;
+        console.log("responseData : ", responseData);
+        res.status(200).send(responseData);
+
+    }
+    catch (error) {
+        console.error("[gethappened] Error :", error.message || error);
+        res.status(500).send(`[gethappened] Error : ${error.message || error}`);
     }
 }
 
