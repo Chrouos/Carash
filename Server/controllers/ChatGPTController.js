@@ -299,7 +299,6 @@ exports.gethappened = async (req, res) => {
             { "role": "system", "content": "以下有一個Json格式表示了整個車禍事實，依照此格式重述整個車禍的經過，原告為第一人稱，只需要講述車禍事實，不用敘述其他無關事實，沒有資料的地方不用敘述，預測金額不用敘述，只需敘述有資料的部分。" },
             { "role": "user", "content": JSON.stringify(requsetData.incidentJson) },
         ]
-        console.log("happendMessage : ", happenedMessage);
 
         const gptResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo",
@@ -310,10 +309,8 @@ exports.gethappened = async (req, res) => {
             frequency_penalty: 0,
             presence_penalty: 0,
         });
-        console.log("gptResponse : ", gptResponse);
 
         const responseData = gptResponse.data.choices[0].message.content;
-        console.log("responseData : ", responseData);
         res.status(200).send(responseData);
 
     }
