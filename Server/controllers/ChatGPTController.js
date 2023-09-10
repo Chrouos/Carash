@@ -164,6 +164,7 @@ exports.templateJSON = async (req, res) => {
         // - 已經有部分資訊了: 詢問還未知曉的資訊 (GPT - 1)
         else {
 
+
             const tidyMessage = [
                 { "role": "system", "content": "你是一位事件擷取機器人，現在有一問題與該問題的敘述和一個Json格式，請你將資訊歸納以及加入以下完整Json格式，若敘述中沒有提到的資訊則將此問題欄位留空，若敘述回答不知道則將此Json格式中的此問題欄位填入'未知'。你必須回答完整以下的Json格式且只回答Json格式，不要回答其餘無關事項。我是原告。" + JSON.stringify(requestData.incidentJson) },
                 { "role": "assistant", "content": requestData.question },
@@ -296,7 +297,7 @@ exports.gethappened = async (req, res) => {
         const requsetData = req.body;
 
         const happenedMessage = [
-            { "role": "system", "content": "以下有一個Json格式表示了整個車禍事實，依照此格式重述整個車禍的經過，原告為第一人稱，只需要講述車禍事實，不用敘述其他無關事實，沒有資料的地方不用敘述，預測金額不用敘述，只需敘述有資料的部分。" },
+            { "role": "system", "content": "以下有一個Json格式表示了整個車禍事實，依照此格式重述整個車禍的經過，用類似於判決書的形式描述。只要講述有資料的車禍經過就好，不能敘述Json格式內其他無關事實與未提供的資料。" },
             { "role": "user", "content": JSON.stringify(requsetData.incidentJson) },
         ]
 
