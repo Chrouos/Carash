@@ -2,6 +2,8 @@ const { Configuration, OpenAIApi } = require("openai");
 const CryptoJS = require('crypto-js')
 const ConfigCrypto = require('../tools/ConfigCrypto')
 const ChromaDB_Tools = require('../tools/ChromaTools');
+const MongoDB_Tools = require('../tools/MongoDbTools');
+const ObjectId = require("mongodb").ObjectId;
 
 // -------------------- 測試 GPT
 exports.chat_test = async (req, res) => {
@@ -42,11 +44,12 @@ exports.chat_test = async (req, res) => {
 // -------------------- 獲得所有對話紀錄的名稱
 exports.getTitle = async (req, res) => {
     try {
-        const chromadb = new ChromaDB_Tools("Traffic_Advisory");
-        const titles = await chromadb.peek();
-        const responseData = titles.ids.map((id, index) => {
-            return Object.assign({}, { id: id }, titles.metadatas[index]);
-        });
+        var responseData = {}; // = 定義回傳變數
+
+        const dbTools = new MongoDB_Tools();
+        const titles = await dbTools.read('AccidentDetails', {}, { title: 1 });
+       
+        responseData.titles = titles
 
         res.status(200).send(responseData);
     }
@@ -60,32 +63,14 @@ exports.getTitle = async (req, res) => {
 exports.getContentJson = async (req, res) => {
     try {
 
-        var responseData = {};
-
         // - 車禍 Json 的資料取出
-        const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
-        const responseJson = await chromadb_json.get({
-            ids: req.body.ids
-        });
+        const dbTools = new MongoDB_Tools();
+        const responseData = await dbTools.read(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(req.body.ids) },
+        )
 
-        // - 聊天內容 的資料取出
-        const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
-        const responseContent = await chromadb_content.get({
-            where: { ids: req.body.ids },
-        });
-
-        // - 聊天名稱 的資料取出
-        const chromadb = new ChromaDB_Tools("Traffic_Advisory");
-        const response = await chromadb.get({
-            ids: req.body.ids
-        });
-
-        // - 準備輸出內容
-        responseData.totalContent = responseContent.metadatas;
-        responseData.incidentJson = responseJson.metadatas[0];
-        responseData.title = response.documents;
-
-        res.status(200).send(responseData);
+        res.status(200).send(responseData[0]);
     }
     catch (error) {
         console.error("[getContentJson] Error :", error.message || error);
@@ -102,7 +87,7 @@ exports.templateJSON = async (req, res) => {
             incidentJson,
             title,
             ids,
-            totalContent
+            chatContent
     */
 
     try {
@@ -120,10 +105,8 @@ exports.templateJSON = async (req, res) => {
         const requestData = req.body;
         const notNullCount = Object.values(responseData.incidentJson).filter(value => value !== "").length; // 目前不是 Null 的值
 
-        // - 呼叫資料庫 ChromaDB
-        const chromadb = new ChromaDB_Tools("Traffic_Advisory");
-        const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
-        const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
+        // - 呼叫資料庫 MongoDB
+        const dbTools = new MongoDB_Tools();
 
         // - 取得台灣的即時時間
         const taiwanTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" });
@@ -154,16 +137,24 @@ exports.templateJSON = async (req, res) => {
                 console.error("🐛 chatGPTController - parse Json Failed:", error);
             }
 
-            responseData.ids = await chromadb.nextIds();
-            chromadb_content.add({
-                metadatas: [{ ids: responseData.ids, character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: createTime }],
-                documents: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
-            })
+            // - 資料庫 第一次對話（因此需要產生聊天室）
+            const insertedId = await dbTools.create(
+                collectionName = 'AccidentDetails', 
+                document = {
+                    title: responseData.title || 'Default title',
+                    chatContent: [{
+                        character: 'chatBot', 
+                        value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", 
+                        createTime: createTime
+                    }],
+                    incidentJson: requestData.incidentJson
+                }
+            )
+            responseData.ids = insertedId.toString()
         }
 
         // - 已經有部分資訊了: 詢問還未知曉的資訊 (GPT - 1)
         else {
-
 
             const tidyMessage = [
                 { "role": "system", "content": "你是一位事件擷取機器人，現在有一問題與該問題的敘述和一個Json格式，請你將資訊歸納以及加入以下完整Json格式，若敘述中沒有提到的資訊則將此問題欄位留空，若敘述回答不知道則將此Json格式中的此問題欄位填入'未知'。你必須回答完整以下的Json格式且只回答Json格式，不要回答其餘無關事項。我是原告。" + JSON.stringify(requestData.incidentJson) },
@@ -209,43 +200,25 @@ exports.templateJSON = async (req, res) => {
         // - 回傳結果
         responseData.question = responseContent;
         const newContent = [
-            { ids: responseData.ids, character: 'questioner', value: userContent, createTime: createTime },
-            { ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: createTime }
+            { character: 'questioner', value: userContent, createTime0
+            : createTime },
+            { character: 'chatBot', value: responseContent, createTime: createTime }
         ]
-        responseData.totalContent.push(
-            { ids: responseData.ids, character: 'questioner', value: userContent, createTime: createTime },
-            { ids: responseData.ids, character: 'chatBot', value: responseContent, createTime: createTime });
+        responseData.chatContent.push(... newContent);
 
         // - 儲存至資料庫內部
-        if (notNullCount === 0) {
-            chromadb.add({
-                ids: responseData.ids,
-                metadatas: [{ title: responseData.title || "testChatBox" }],
-                documents: responseData.title || "testChatBox"
-            })
-            chromadb_json.add({
-                ids: responseData.ids,
-                metadatas: [responseData.incidentJson],
-                documents: responseData.incidentJson['事發經過']
-            })
-        }
-        else {
-            chromadb.update({
-                ids: responseData.ids,
-                metadatas: [{ title: responseData.title || "testChatBox" }],
-                documents: responseData.title || "testChatBox"
-            })
-            chromadb_json.update({
-                ids: responseData.ids,
-                metadatas: [responseData.incidentJson],
-                documents: responseData.incidentJson['事發經過']
-            })
-        }
-
-        chromadb_content.add({
-            metadatas: newContent,
-            documents: [userContent, responseContent],
-        })
+        await dbTools.update(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(responseData.ids) }, 
+            updateOperation = { 
+                $push: { 
+                    chatContent: { $each: newContent } 
+                },
+                $set: {
+                    incidentJson: responseData.incidentJson
+                }
+            }
+        );
 
         res.status(200).send(responseData);
 
@@ -287,7 +260,7 @@ exports.similarVerdict = async (req, res) => {
 }
 
 // ----------------- 生成事件經過
-exports.gethappened = async (req, res) => {
+exports.getHappened = async (req, res) => {
     try {
 
         const configCrypto = new ConfigCrypto();
@@ -316,8 +289,8 @@ exports.gethappened = async (req, res) => {
 
     }
     catch (error) {
-        console.error("[gethappened] Error :", error.message || error);
-        res.status(500).send(`[gethappened] Error : ${error.message || error}`);
+        console.error("[getHappened] Error :", error.message || error);
+        res.status(500).send(`[getHappened] Error : ${error.message || error}`);
     }
 }
 

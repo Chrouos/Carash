@@ -1,5 +1,5 @@
 {
-  "name": "carash-server",
+  "name": "ccg-collision-care-guide",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -19,6 +19,7 @@
     "cross-env": "^7.0.3",
     "crypto-js": "^4.1.1",
     "express": "^4.18.2",
+    "mongodb": "^6.1.0",
     "mysql": "^2.18.1",
     "openai": "^3.3.0",
     "python-shell": "^5.0.0"

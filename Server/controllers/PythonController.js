@@ -1,6 +1,9 @@
 let { PythonShell } = require('python-shell')
 const ChromaDB_Tools = require('../tools/ChromaTools');
+const MongoDB_Tools = require('../tools/MongoDbTools');
 const fs = require('fs');
+const ObjectId = require("mongodb").ObjectId;
+
 
 // -------------------- 預測金額
 exports.predictor_money = async (req, res) => {
@@ -8,6 +11,7 @@ exports.predictor_money = async (req, res) => {
 
         // - 整理 request data
         const requestData = req.body;
+        var responseData = req.body;
 
         // - 回傳的資料
         var responseData = { predictor_money: 0 };
@@ -31,12 +35,16 @@ exports.predictor_money = async (req, res) => {
         requestData.incidentJson['預測金額'] = parseInt(responseData['predictor_money']);
 
         // - 儲存到資料庫
-        const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
-        chromadb_json.update({
-            ids: requestData.ids,
-            metadatas: [requestData.incidentJson],
-            documents: requestData.incidentJson['事發經過']
-        })
+        const mongodb = new MongoDB_Tools();
+        await mongodb.update(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(responseData.ids) }, 
+            updateOperation = { 
+                $set: {
+                    incidentJson: requestData.incidentJson
+                }
+            }
+        );
 
         console.log("🚀 ~ file: pythonController.js:29 ~ exports.predictor_money=async ~ responseData:", responseData)
         res.status(200).send(responseData);

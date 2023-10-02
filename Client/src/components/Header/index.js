@@ -16,7 +16,7 @@ const HeaderComponent = () => {
     <Header className="header" >
 
       <div style={{ width: '-webkit-fill-available', fontSize: '120%', display: 'flex' }} > 
-        <img src="ccg_icon.png" style={{  maxHeight: '64px' }} /> 交通事故法律諮詢代理人 - CollisionCare Guide 
+        <img alt="ccg-icon" src="ccg_icon.png" style={{  maxHeight: '64px' }} /> 交通事故法律諮詢代理人 - CollisionCare Guide 
       </div>
 
       <Menu className="header-menu"

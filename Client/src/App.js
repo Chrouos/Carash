@@ -4,13 +4,13 @@ import HeaderComponent from "./components/Header";
 import FooterComponent from "./components/Footer";
 import Chat from "./views/Chat";
 import Home from "./views/Home";
-import Agent from "./views/Agent";
+// import Agent from "./views/Agent";
 
 import React from "react";
 import { Layout } from "antd";
 import { Route, Routes } from "react-router-dom";
 
-import axios from './utils/axios';
+// import axios from './utils/axios';
 
 function App() {
 

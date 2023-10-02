@@ -13,28 +13,16 @@ app.use(express.json()); // Parse the JSON request body
 // -------------------- Server Settings
 const port = configCrypto.config.PORT || 8280;
 let hostname = configCrypto.config.HOSTNAME || 'localhost';
+const uri = configCrypto.config.MONGODB_URL || 'mongodb://localhost:27017';
 
-// -------------------- Chroma
-const ChromaDB_Tools = require('./tools/ChromaTools');
-// const chromadb = new ChromaDB_Tools("Traffic_Advisory");
-// const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
-// const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
-// chromadb.deleteCollection()
-// chromadb_json.deleteCollection()
-// chromadb_content.deleteCollection()
-// chromadb.checkPeek()
-// chromadb_json.checkPeek()
-// chromadb_content.checkPeek()
-
-// const chromadb = new ChromaDB_Tools("Traffic_Advisory_Final");
-// chromadb.query({
-//   nResults: 2, 
-//   queryTexts: ["被告駕駛車輛未注意讓行進中之車輛優先通行，撞及原告駕駛之機車，原告因緊急煞車而摔倒地，受傷害。"]
-// }) 
+// -------------------- MongoDB.
+// const MongoDB_Tools = require('./tools/MongoDbTools');
+// const mongodb = new MongoDB_Tools();
+// mongodb.deleteAllFromCollection(collectionName = 'AccidentDetails')
 
 
 // -------------------- routers list
-const chatGPTRouter = require('./routers/ChatGPTRouter')
+const chatGPTRouter = require('./routers/ChatGPTRouter');
 const pythonRouter = require('./routers/PythonRouter');
 app.use(chatGPTRouter);
 app.use(pythonRouter);
@@ -52,7 +40,7 @@ if (hostname === 'localhost') {
 } 
 
 app.listen(port, () => {
-  console.log(`[LawsNote] Server listening at http://${hostname}:${port}`);
+  console.log(`Server listening at http://${hostname}:${port}`);
   console.log(`Set the environment to "${process.env.NODE_ENV}"`)
 });
 
@@ -62,3 +50,25 @@ app.listen(port, () => {
 app.get('/', (req, res) => {
   res.send("Hello")
 });
+
+
+
+
+
+// -------------------- Chroma
+// const ChromaDB_Tools = require('./tools/ChromaTools');
+// const chromadb = new ChromaDB_Tools("Traffic_Advisory_Final");
+// const chromadb_json = new ChromaDB_Tools("Traffic_Advisory_Json");
+// const chromadb_content = new ChromaDB_Tools("Traffic_Advisory_Content");
+// chromadb.deleteCollection()
+// chromadb_json.deleteCollection()
+// chromadb_content.deleteCollection()
+// chromadb.checkPeek()
+// chromadb_json.checkPeek()
+// chromadb_content.checkPeek()
+
+// const chromadb = new ChromaDB_Tools("Traffic_Advisory_Final");
+// chromadb.query({
+//   nResults: 2, 
+//   queryTexts: ["被告駕駛車輛未注意讓行進中之車輛優先通行，撞及原告駕駛之機車，原告因緊急煞車而摔倒地，受傷害。"]
+// }) 

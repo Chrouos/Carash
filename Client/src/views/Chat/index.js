@@ -1,16 +1,18 @@
 import ChatBox from './chatBox';
 import './styles.css';
 
+import axios from '../../utils/axios';
+import authHeader from '../../store/auth-header';
+
 import React, { useState, useRef } from "react";
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Layout, Menu, Button, theme, Col, Row, Input, Form, Modal, Table } from "antd";
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined } from '@ant-design/icons';
 const { Column } = Table;
 const { Content, Sider, Header } = Layout;
 const { TextArea } = Input;
 
 
-import axios from '../../utils/axios';
-import authHeader from '../../store/auth-header';
+
 
 function Chat() {
 
@@ -52,7 +54,7 @@ function Chat() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalPredictorMoney, setModalPredictorMoney] = useState("");
   const [modalSimilarVerdict, setModalSimilarVerdict] = useState("");
-  const [modalGethappened, setModalGethappened] = useState("");
+  const [modalGetHappened, setModalGetHappened] = useState("");
 
 
   // + Items
@@ -72,7 +74,7 @@ function Chat() {
   const enterChatValue = async () => {
 
     // - 防呆：防止二次輸入
-    if (enterStatus == false) { return; }
+    if (enterStatus === false) { return; }
     setEnterStatus(false);
 
     // - 傳送給 API 的內容
@@ -81,7 +83,7 @@ function Chat() {
       "question": questionValue,
       "incidentJson": incidentJsonSiderValue,
       "title": currentTitle,
-      "totalContent": chatContent,
+      "chatContent": chatContent,
     }
     if (currentIds) {
       request['ids'] = currentIds;
@@ -101,12 +103,12 @@ function Chat() {
       .then(response => {
 
         // - 修改狀態
-        setCurrentIds(response.data.ids);
+        setCurrentIds(response.data._id);
         setCurrentTitle(response.data.title);
         setQuestionvalue(response.data.question);
 
         // - 對話紀錄的更改
-        const responseContent = response.data.totalContent;
+        const responseContent = response.data.chatContent;
         setChatContent(responseContent);
 
         // - JSON 紀錄的修改
@@ -129,29 +131,27 @@ function Chat() {
     const request = {}
 
     await axios
-      .post('/chatGPT/getTitle', request, {
+      .get('/chatGPT/getTitle', request, {
         headers: authHeader(),
       })
       .then(response => {
 
         // - 將資料整理後設為可選擇 Menu
-        const newTitleSider = response.data.map((item, index) => {
-          // const key = String(index + 1);
+        const newTitleSider = response.data.titles.map((item, index) => {
           return {
-            key: item.id,
+            key: item._id,
             label: item.title,
             icon: <UserOutlined />,
           }
         })
-
         setTitlesSider(newTitleSider);
-
       })
       .catch(error => console.error('Error fetching data:', error));
   }
 
   // -------------------- 從 Menu 獲得聊天紀錄與Json
   const fetchingContentJson = async (currentIds) => {
+
     const request = {
       ids: currentIds
     }
@@ -162,7 +162,7 @@ function Chat() {
         headers: authHeader(),
       })
       .then(response => {
-        setChatContent(response.data.totalContent);
+        setChatContent(response.data.chatContent);
         setIncidentJsonSiderValue(response.data.incidentJson);
         setCurrentTitle(response.data.title)
       })
@@ -207,20 +207,24 @@ function Chat() {
 
       const saveFile = axios.post('/python/save_predictor_file', request, { headers: authHeader() }).catch(e => console.log('Error in saveFile:', e));
       const predictorMoney = axios.post('/python/predictor_money', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
-      const gethappened = axios.post('/chatgpt/gethappened', request, { headers: authHeader() }).catch(e => console.log('Error in getheappened:', e))
+      const getHappened = axios.post('/chatgpt/getHappened', request, { headers: authHeader() }).catch(e => console.log('Error in getHappened:', e))
 
-      await Promise.all([saveFile, predictorMoney, gethappened])
+      await Promise.all([saveFile, predictorMoney, getHappened])
         .then((responses) => {
 
-          const response_predictorMoney = responses[1];
-          setModalPredictorMoney(
-            <p>預測金額為： {parseInt(response_predictorMoney.data.predictor_money)}</p>
-          );
-
-          const response_gethappened = responses[2];
-          setModalGethappened(
-            <p>事發經過 : {response_gethappened.data}</p>
-          )
+          if (responses[1] && responses[1].data) {
+            const response_predictorMoney = responses[1];
+            setModalPredictorMoney(
+                <p>預測金額為： {parseInt(response_predictorMoney.data.predictor_money)}</p>
+            );
+           }
+        
+          if (responses[2] && responses[2].data) {
+              const response_getHappened = responses[2];
+              setModalGetHappened(
+                  <p>事發經過 : {response_getHappened.data}</p>
+              );
+          }
 
         })
         .catch((error) => {
@@ -371,7 +375,7 @@ function Chat() {
                         <div>
                           {modalPredictorMoney}
                           <br />
-                          {modalGethappened}
+                          {modalGetHappened}
                           <br />
                           {modalSimilarVerdict}
                         </div>
