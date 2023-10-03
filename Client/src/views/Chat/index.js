@@ -205,8 +205,11 @@ function Chat() {
         })
         .catch(e => console.log('Error in similarVerdict:', e));
 
-      const saveFile = axios.post('/python/save_predictor_file', request, { headers: authHeader() }).catch(e => console.log('Error in saveFile:', e));
-      const predictorMoney = axios.post('/python/predictor_money', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
+
+      const saveFile = await axios.post('/python/save_predictor_file', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
+      await new Promise(resolve => setTimeout(resolve, 1000));  // 1 second delay
+
+      const predictorMoney = await axios.post('/python/predictor_money', request, { headers: authHeader() }).catch(e => console.log('Error in predictorMoney:', e));
       const getHappened = axios.post('/chatgpt/getHappened', request, { headers: authHeader() }).catch(e => console.log('Error in getHappened:', e))
 
       await Promise.all([saveFile, predictorMoney, getHappened])

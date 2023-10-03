@@ -10,6 +10,7 @@
 /Server/lawsnote_project/log
 __pycache__/
 /node_modules
+Server/controllers/lawsnote_project/data/formal_test.json
 
 /.pnp
 .pnp.js
@@ -33,3 +34,4 @@ yarn-debug.log*
 yarn-error.log*
 Database
 Server/lawsnote_project/log/CNN.log
+Server/controllers/lawsnote_project/data/formal_test.json

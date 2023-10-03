@@ -267,11 +267,11 @@ exports.getHappened = async (req, res) => {
         const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
         const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
 
-        const requsetData = req.body;
+        const requestData = req.body;
 
         const happenedMessage = [
             { "role": "system", "content": "以下有一個Json格式表示了整個車禍事實，依照此格式重述整個車禍的經過，用類似於判決書的形式描述。只要講述有資料的車禍經過就好，不能敘述Json格式內其他無關事實與未提供的資料。" },
-            { "role": "user", "content": JSON.stringify(requsetData.incidentJson) },
+            { "role": "user", "content": JSON.stringify(requestData.incidentJson) },
         ]
 
         const gptResponse = await openai.createChatCompletion({
