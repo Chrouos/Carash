@@ -12,6 +12,8 @@ __pycache__/
 /node_modules
 Server/controllers/lawsnote_project/data/formal_test.json
 
+.env
+
 /.pnp
 .pnp.js
 

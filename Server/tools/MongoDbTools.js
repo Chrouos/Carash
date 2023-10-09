@@ -5,7 +5,19 @@ class MongoDB_Tools {
 
     constructor() {
         this.configCrypto = new ConfigCrypto();
-        this.uri = this.configCrypto.config.MONGODB_URL || 'mongodb://localhost:27017';
+
+        const {
+            MONGODB_PROTOCOL = 'mongodb',
+            MONGODB_USERNAME = 'username',
+            MONGODB_PASSWORD = 'password',
+            MONGODB_HOST = 'localhost',
+            MONGODB_PORT = '27017',
+            MONGODB_DBNAME = 'CCG',
+            MONGODB_AUTHSOURCE = 'CCG'
+        } = this.configCrypto.config;
+        
+        this.uri = `${MONGODB_PROTOCOL}://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/${MONGODB_DBNAME}?authSource=${MONGODB_AUTHSOURCE}`;
+        console.log(this.uri)
         this.client = new MongoClient(this.uri, {
             serverApi: {
                 version: ServerApiVersion.v1,
