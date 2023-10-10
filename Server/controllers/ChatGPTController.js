@@ -48,7 +48,7 @@ exports.getTitle = async (req, res) => {
 
         const dbTools = new MongoDB_Tools();
         const titles = await dbTools.read('AccidentDetails', {}, { title: 1 });
-       
+
         responseData.titles = titles
 
         res.status(200).send(responseData);
@@ -103,7 +103,7 @@ exports.templateJSON = async (req, res) => {
 
         // - 整理 request data
         const requestData = req.body;
-        const notNullCount = Object.values(responseData.incidentJson).filter(value => value !== "").length; // 目前不是 Null 的值
+        const notNullCount = Object.values(responseData.incidentJson["車禍發生事故"]).filter(value => value !== "").length; // 目前不是 Null 的值
 
         // - 呼叫資料庫 MongoDB
         const dbTools = new MongoDB_Tools();
@@ -113,12 +113,14 @@ exports.templateJSON = async (req, res) => {
         const createTime = new Date(taiwanTime).toISOString();
 
         // - 目前還未有任何資訊: 第一次對話
+        console.log("req.body is : ", req.body);
         if (notNullCount == 0) {
 
             const firstMessages = [
-                { "role": "system", "content": "你現在是一件交通諮詢的專家，現在有一件交通事故的敘述，請你將資訊歸納成如下的json格式，如果沒有資料請保持欄位空白，歸納的資訊請說明成類判決書格式。我 = 原告，對方 = 被告" + JSON.stringify(requestData.incidentJson) },
+                { "role": "system", "content": "你現在是一件交通諮詢的專家，現在有一件交通事故的敘述，請你將資訊歸納成如下的json格式，如果沒有資料請保持欄位空白，歸納的資訊請說明成類判決書格式。我 = 原告，對方 = 被告" + JSON.stringify(requestData.incidentJson["車禍發生事故"]) },
                 { "role": "user", "content": requestData.content }
             ]
+            console.log("firstMessages is ", firstMessages);
 
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo",
@@ -132,19 +134,20 @@ exports.templateJSON = async (req, res) => {
 
             // 回傳的有可能不是 JSON
             try {
-                responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
+                responseData.incidentJson["車禍發生事故"] = JSON.parse(gptResponse.data.choices[0].message.content);
+                console.log("responseData.incidentJson is : ", responseData.incidentJson["車禍發生事故"]);
             } catch (error) {
                 console.error("🐛 chatGPTController - parse Json Failed:", error);
             }
 
             // - 資料庫 第一次對話（因此需要產生聊天室）
             const insertedId = await dbTools.create(
-                collectionName = 'AccidentDetails', 
+                collectionName = 'AccidentDetails',
                 document = {
                     title: responseData.title || 'Default title',
                     chatContent: [{
-                        character: 'chatBot', 
-                        value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", 
+                        character: 'chatBot',
+                        value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
                         createTime: createTime
                     }],
                     incidentJson: requestData.incidentJson
@@ -157,10 +160,11 @@ exports.templateJSON = async (req, res) => {
         else {
 
             const tidyMessage = [
-                { "role": "system", "content": "你是一位事件擷取機器人，現在有一問題與該問題的敘述和一個Json格式，請你將資訊歸納以及加入以下完整Json格式，若敘述中沒有提到的資訊則將此問題欄位留空，若敘述回答不知道則將此Json格式中的此問題欄位填入'未知'。你必須回答完整以下的Json格式且只回答Json格式，不要回答其餘無關事項。我是原告。" + JSON.stringify(requestData.incidentJson) },
+                { "role": "system", "content": "你是一位事件擷取機器人，現在有一問題與該問題的敘述和一個Json格式，請你將資訊歸納以及加入以下完整Json格式，若敘述中沒有提到的資訊則將此問題欄位留空，若敘述回答不知道則將此Json格式中的此問題欄位填入'未知'。你必須回答完整以下的Json格式且只回答Json格式，不要回答其餘無關事項。我是原告。" + JSON.stringify(requestData.incidentJson["車禍發生事故"]) },
                 { "role": "assistant", "content": requestData.question },
                 { "role": "user", "content": requestData.content } // 把目前車禍相關的 JSON 與 使用者回覆串接
             ]
+            console.log("tidyMessages is : ", tidyMessage);
 
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo",
@@ -174,17 +178,27 @@ exports.templateJSON = async (req, res) => {
 
             // 回傳的有可能不是 JSON
             try {
-                responseData.incidentJson = JSON.parse(gptResponse.data.choices[0].message.content);
+                responseData.incidentJson["車禍發生事故"] = JSON.parse(gptResponse.data.choices[0].message.content);
             } catch (error) {
                 console.error("Error parsing JSON:", error);
             }
         }
 
+        var questionkey = "你是一位交通諮詢代理人，使用溫柔的口氣表達對當事人發生的事感到惋惜，並且指示他'請點選下一步'。";
+        for (const key in responseData.incidentJson["車禍發生事故"]) {
+            if (!responseData.incidentJson["車禍發生事故"][key]) {
+                console.log(`key = ${key}`);
+                questionkey = `你現在是一位交通事故諮詢的代理人，請詢問一個關於${key}的問題，你只需要提問而不需要回答任何問題。`;
+                break;
+            }
+        }
+
         // - 最後 GPT 的回覆格式
         const questionMessage = [
-            { "role": "system", "content": "你現在是一個交通事故諮詢的機器人，請依照JSON格式中依序檢查首個空值value的key，產生一個詢問此key的問題。若是依序檢查JSON格式中沒有空值value或是value為 \"未知 \"，則直接回答 \"請點擊確認輸出內容。\"。請不要回答問題以外的東西，你只需要提問就好，也不要回答無關的問題。" },
-            { "role": "user", "content": JSON.stringify(requestData.incidentJson) }
+            { "role": "system", "content": questionkey },
+            //{ "role": "user", "content": JSON.stringify(requestData.incidentJson["車禍發生事故"]) }
         ]
+        console.log("questionMessage is : ", questionMessage);
 
         const gptResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo",
@@ -200,25 +214,59 @@ exports.templateJSON = async (req, res) => {
         // - 回傳結果
         responseData.question = responseContent;
         const newContent = [
-            { character: 'questioner', value: userContent, createTime0
-            : createTime },
+            {
+                character: 'questioner', value: userContent, createTime0
+                    : createTime
+            },
             { character: 'chatBot', value: responseContent, createTime: createTime }
         ]
-        responseData.chatContent.push(... newContent);
+        responseData.chatContent.push(...newContent);
 
         // - 儲存至資料庫內部
+
         await dbTools.update(
             collectionName = 'AccidentDetails',
-            query = { _id: new ObjectId(responseData.ids) }, 
-            updateOperation = { 
-                $push: { 
-                    chatContent: { $each: newContent } 
+            query = { _id: new ObjectId(responseData.ids) },
+            updateOperation = {
+                $push: {
+                    chatContent: { $each: newContent }
                 },
                 $set: {
                     incidentJson: responseData.incidentJson
                 }
             }
         );
+
+        if (notNullCount === 0) {
+            chromadb.add({
+                ids: responseData.ids,
+                metadatas: [{ title: responseData.title || "NewtestChat" }],
+                documents: responseData.title || "NewtestChat"
+            })
+            chromadb_json.add({
+                ids: responseData.ids,
+                metadatas: [responseData.incidentJson],
+                documents: responseData.incidentJson["車禍發生事故"]['事發經過']
+            })
+        }
+        else {
+            chromadb.update({
+                ids: responseData.ids,
+                metadatas: [{ title: responseData.title || "NewtestChat" }],
+                documents: responseData.title || "NewtestChat"
+            })
+            chromadb_json.update({
+                ids: responseData.ids,
+                metadatas: [responseData.incidentJson],
+                documents: responseData.incidentJson["車禍發生事故"]['事發經過']
+            })
+        }
+
+        chromadb_content.add({
+            metadatas: newContent,
+            documents: [userContent, responseContent],
+        })
+
 
         res.status(200).send(responseData);
 
@@ -267,7 +315,7 @@ exports.getHappened = async (req, res) => {
         const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
         const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
 
-        const requestData = req.body;
+        const reqestData = req.body;
 
         const happenedMessage = [
             { "role": "system", "content": "以下有一個Json格式表示了整個車禍事實，依照此格式重述整個車禍的經過，用類似於判決書的形式描述。只要講述有資料的車禍經過就好，不能敘述Json格式內其他無關事實與未提供的資料。" },
@@ -296,8 +344,8 @@ exports.getHappened = async (req, res) => {
 
 
 
-/*
 
+/*
 1:
 108年4月30日，大概早上十點多的時候，我騎重機在中山路附近行駛。有台轎車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。
 

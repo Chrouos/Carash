@@ -17,22 +17,51 @@ const { TextArea } = Input;
 function Chat() {
 
   const incidentTemplate = {
-    "事故發生日期": "",
-    "事故發生時間": "",
-    "事故發生地點": "",
-    "被告駕駛交通工具": "",
-    "原告駕駛交通工具": "",
-    "行駛道路": "",
-    "事發經過": "",
-    "行進方向的號誌": "",
-    "天候": "",
-    "路況": "",
-    "行車速度": "",
-    "被告車輛損壞情形": "",
-    "原告車輛損壞情形": "",
-    "被告傷勢": "",
-    "原告傷勢": ""
+    "車禍發生事故": {
+      "事故發生日期": "",
+      "事故發生時間": "",
+      "事故發生地點": "",
+      "被告駕駛交通工具": "",
+      "原告駕駛交通工具": "",
+      "行駛道路": "",
+      "事發經過": "",
+      "行進方向的號誌": "",
+      "天候": "",
+      "路況": "",
+      "行車速度": "",
+      "原告車輛損壞情形": "",
+      "原告傷勢": "",
+      "被告車輛損壞情形": "",
+      "被告傷勢": "",
+      "從哪裡出發": "",
+      "出發去哪裡": "",
+      "出發的目的是什麼": "",
+    },
+    "車輛詳細狀況": {
+      "車輛出廠年月": "",
+      "修車費用": "",
+      "零件費用": "",
+      "材料費用": "",
+      "工資費用": "",
+      "板金費用": "",
+      "塗裝費用": "",
+      "烤漆費用": "",
+    },
+    "醫療詳細狀況": {
+      "醫療費用": "",
+      "看護費用": "",
+      "看護天數": "",
+      "看護價格": "",
+    },
+    "其他費用賠償": {
+      "交通費用": "",
+      "財產損失": "",
+      "營業損失": "",
+      "工作損失": "",
+      "精神賠償": "",
+    },
   };
+
 
   // * Settings
   const contentLeftSide = 9, contentRightSide = 23 - contentLeftSide;
@@ -46,6 +75,9 @@ function Chat() {
   const [collapsed, setCollapsed] = useState(false);
   const [chatInputValue, setChatInputValue] = useState('');
   const [incidentJsonSiderValue, setIncidentJsonSiderValue] = useState(incidentTemplate); // + incident Json
+  const [showJsonSider, setshowJsonSider] = useState(incidentTemplate["車禍發生事故"]);
+  const [selectSection, setSelectSection] = useState("車禍發生事故");
+  const [isInputEnabled, setIsInputEnabled] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(""); // + Title
   const [currentIds, setCurrentIds] = useState(null); // + Ids
   const [questionValue, setQuestionvalue] = useState("");
@@ -114,6 +146,7 @@ function Chat() {
         // - JSON 紀錄的修改
         const myJsonResponse = response.data.incidentJson;
         setIncidentJsonSiderValue(myJsonResponse);
+        setshowJsonSider(myJsonResponse["車禍發生事故"]);
 
         // - 防呆結束：防止二次輸入
         setEnterStatus(true);
@@ -164,7 +197,8 @@ function Chat() {
       .then(response => {
         setChatContent(response.data.chatContent);
         setIncidentJsonSiderValue(response.data.incidentJson);
-        setCurrentTitle(response.data.title)
+        setCurrentTitle(response.data.title);
+        setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);
       })
       .catch(error => console.error('Error fetching data:', error));
   };
@@ -181,8 +215,8 @@ function Chat() {
     );
 
     const request = {
-      "happened": incidentJsonSiderValue.事發經過,
-      "incidentJson": incidentJsonSiderValue,
+      "happened": incidentJsonSiderValue["車禍發生事故"]["事發經過"],
+      "incidentJson": incidentJsonSiderValue["車禍發生事故"],
       "ids": currentIds
     }
 
@@ -218,15 +252,15 @@ function Chat() {
           if (responses[1] && responses[1].data) {
             const response_predictorMoney = responses[1];
             setModalPredictorMoney(
-                <p>預測金額為： {parseInt(response_predictorMoney.data.predictor_money)}</p>
+              <p>預測金額為： {parseInt(response_predictorMoney.data.predictor_money)}</p>
             );
-           }
-        
+          }
+
           if (responses[2] && responses[2].data) {
-              const response_getHappened = responses[2];
-              setModalGetHappened(
-                  <p>事發經過 : {response_getHappened.data}</p>
-              );
+            const response_getHappened = responses[2];
+            setModalGetHappened(
+              <p>事發經過 : {response_getHappened.data}</p>
+            );
           }
 
         })
@@ -240,12 +274,40 @@ function Chat() {
 
   };
 
+  // 更換左側顯示Json頁面
+  const showNextJsonSider = () => {
+
+    if (selectSection === "車禍發生事故") {
+      setshowJsonSider(incidentJsonSiderValue["車輛詳細狀況"]);
+      setSelectSection("車輛詳細狀況");
+      setIsInputEnabled(true);
+    }
+    else if (selectSection === "車輛詳細狀況") {
+      setshowJsonSider(incidentJsonSiderValue["醫療詳細狀況"]);
+      setSelectSection("醫療詳細狀況");
+      setIsInputEnabled(true);
+    }
+    else if (selectSection === "醫療詳細狀況") {
+      setshowJsonSider(incidentJsonSiderValue["其他費用賠償"]);
+      setSelectSection("其他費用賠償");
+      setIsInputEnabled(true);
+    }
+    else if (selectSection === "其他費用賠償") {
+      setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);
+      setSelectSection("車禍發生事故");
+      setIsInputEnabled(false);
+    }
+
+  }
+
   const createNewChat = () => {
     setCurrentIds(null);
     setCurrentTitle(null);
     setChatInputValue(null);
     setChatContent([{ character: 'chatBot', value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ", createTime: '2023-07-18T05:44:00' },])
     setIncidentJsonSiderValue(incidentTemplate);
+    setshowJsonSider(incidentTemplate["車禍發生事故"]);
+    setSelectSection("車禍發生事故");
     console.log("now is createNewChat")
   };
 
@@ -272,7 +334,7 @@ function Chat() {
 
   // -------------------- 一次輸出 Json 紀錄
   const RenderFieldValue = () => {
-    return Object.entries(incidentJsonSiderValue).map(([key, value]) => {
+    return Object.entries(showJsonSider).map(([key, value]) => {
       return (
         <Form.Item key={key}>
           <label htmlFor={key}>{key}</label>
@@ -280,12 +342,12 @@ function Chat() {
             id={key}
             name={key}
             placeholder={`currently unknown .... `}
-            disabled
+            disabled={!isInputEnabled}
             value={value}
           />
         </Form.Item>
-      );
-    });
+      )
+    })
   };
 
   const handleModalClose = () => {
@@ -340,7 +402,7 @@ function Chat() {
                 id="title"
                 value={currentTitle}
                 onChange={(e) => setCurrentTitle(e.target.value)}
-                placeholder='Please enter this chat title, default = testChatBox'
+                placeholder='Please enter this chat title, default = NewtestChat'
                 style={{ width: '350px' }}
               />
             </div>
@@ -365,6 +427,7 @@ function Chat() {
 
                     <div style={{ textAlign: 'center' }}>
                       <Button icon={<EnterOutlined />} onClick={showPredict}> 確認輸出內容 </Button>
+                      <Button icon={<EnterOutlined />} onClick={showNextJsonSider}> 下一步 </Button>
                       <Modal
                         width={'65%'}
                         bodyStyle={{ height: '80vh', overflowY: 'auto' }}
