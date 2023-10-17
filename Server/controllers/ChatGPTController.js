@@ -86,7 +86,7 @@ exports.templateJSON = async (req, res) => {
             question,
             incidentJson,
             title,
-            ids,
+            _id,
             chatContent
     */
 
@@ -144,7 +144,7 @@ exports.templateJSON = async (req, res) => {
             const insertedId = await dbTools.create(
                 collectionName = 'AccidentDetails',
                 document = {
-                    title: responseData.title || 'Default title',
+                    title: responseData.title || 'New ' + createTime,
                     chatContent: [{
                         character: 'chatBot',
                         value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
@@ -153,7 +153,7 @@ exports.templateJSON = async (req, res) => {
                     incidentJson: requestData.incidentJson
                 }
             )
-            responseData.ids = insertedId.toString()
+            responseData._id = insertedId.toString()
         }
 
         // - 已經有部分資訊了: 詢問還未知曉的資訊 (GPT - 1)
@@ -188,7 +188,7 @@ exports.templateJSON = async (req, res) => {
         for (const key in responseData.incidentJson["車禍發生事故"]) {
             if (!responseData.incidentJson["車禍發生事故"][key]) {
                 console.log(`key = ${key}`);
-                questionkey = `你現在是一位交通事故諮詢的代理人，請詢問一個關於${key}的問題，你只需要提問而不需要回答任何問題。`;
+                questionkey = `你現在是一位交通事故諮詢的代理人，請詢問一個關於${key}的問題給使用者，你只需要提問而不需要回答任何問題。`;
                 break;
             }
         }
@@ -214,19 +214,17 @@ exports.templateJSON = async (req, res) => {
         // - 回傳結果
         responseData.question = responseContent;
         const newContent = [
-            {
-                character: 'questioner', value: userContent, createTime0
-                    : createTime
-            },
+            { character: 'questioner', value: userContent, createTime: createTime },
             { character: 'chatBot', value: responseContent, createTime: createTime }
         ]
         responseData.chatContent.push(...newContent);
 
         // - 儲存至資料庫內部
 
+        console.log("ids is : ", responseData._id);
         await dbTools.update(
             collectionName = 'AccidentDetails',
-            query = { _id: new ObjectId(responseData.ids) },
+            query = { _id: new ObjectId(responseData._id) },
             updateOperation = {
                 $push: {
                     chatContent: { $each: newContent }
@@ -237,36 +235,6 @@ exports.templateJSON = async (req, res) => {
             }
         );
 
-        if (notNullCount === 0) {
-            chromadb.add({
-                ids: responseData.ids,
-                metadatas: [{ title: responseData.title || "NewtestChat" }],
-                documents: responseData.title || "NewtestChat"
-            })
-            chromadb_json.add({
-                ids: responseData.ids,
-                metadatas: [responseData.incidentJson],
-                documents: responseData.incidentJson["車禍發生事故"]['事發經過']
-            })
-        }
-        else {
-            chromadb.update({
-                ids: responseData.ids,
-                metadatas: [{ title: responseData.title || "NewtestChat" }],
-                documents: responseData.title || "NewtestChat"
-            })
-            chromadb_json.update({
-                ids: responseData.ids,
-                metadatas: [responseData.incidentJson],
-                documents: responseData.incidentJson["車禍發生事故"]['事發經過']
-            })
-        }
-
-        chromadb_content.add({
-            metadatas: newContent,
-            documents: [userContent, responseContent],
-        })
-
 
         res.status(200).send(responseData);
 
@@ -274,8 +242,330 @@ exports.templateJSON = async (req, res) => {
         console.error("[templateJSON] Error fetching from OpenAI:", error.message || error);
         res.status(500).send(`[templateJSON] Error fetching from OpenAI: ${error.message || error}`);
     }
-};
+}
 
+// -------------------- 詢問車損醫療
+exports.carmedJSON = async (req, res) => {
+    try {
+
+        // ResponseData.
+        //     content,
+        //     question,
+        //     incidentJson,
+        //     title,
+        //     _id,
+        //     chatContent,
+        //     selectSection
+
+
+        // - 獲得 OpenAI API
+        const configCrypto = new ConfigCrypto();
+        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
+        const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
+
+        // - 回傳資訊
+        var responseData = req.body;
+        const userContent = req.body.content;
+
+        // - 整理 request data
+        const requestData = req.body;
+
+        // - 呼叫資料庫 MongoDB
+        const dbTools = new MongoDB_Tools();
+
+        // - 取得台灣的即時時間
+        const taiwanTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" });
+        const createTime = new Date(taiwanTime).toISOString();
+
+        console.log("req.body is : ", req.body);
+        if (req.body.selectSection == "車輛詳細狀況") {
+
+            // 歸納JSON
+            const firstMessages = [
+                { "role": "system", "content": "你是一個車禍諮詢專家，有一問題與回答，有兩種問題。第一種若問題是\"是否有修車估價單?\"，若使用者回覆沒有，就將修車估價單設為\"無\"，以下JSON格式的中費用欄位的值欄位填為0;若使用者回覆有，就將修車估價單設為\"有\"，其他值欄位則保持空白。第二種問題是問車兩出廠年月或是費用問題，就將資訊歸納並加入以下完整的JSON格式中，非問題的欄位需保持不變，你必須回答整個JSON格式，且只能回答JSON格式，不需回答其餘無關事情，例如:\"車輛出廠年月\": \"100年9月\"、\"修車費用\":\"22500元\"。以下為現有JSON格式:" + JSON.stringify(requestData.incidentJson["車輛詳細狀況"]) },
+                { "role": "assistant", "content": requestData.question },
+                { "role": "user", "content": requestData.content }
+            ]
+            console.log("firstMessages is ", firstMessages);
+
+            const firstgptResponse = await openai.createChatCompletion({
+                model: "gpt-3.5-turbo",
+                messages: firstMessages,
+                temperature: 0.1,
+                max_tokens: 1024,
+                top_p: 1,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+            });
+
+
+            try {
+                responseData.incidentJson["車輛詳細狀況"] = JSON.parse(firstgptResponse.data.choices[0].message.content);
+                console.log("responseData.incidentJson is : ", responseData.incidentJson["車輛詳細狀況"]);
+            } catch (error) {
+                console.error("🐛 chatGPTController - parse Json Failed:", error);
+            }
+
+            // 詢問問題
+            var questionkey = "";
+            if (responseData.incidentJson["車輛詳細狀況"]["是否有修車估價單"] === "無") {
+                questionkey = "你是一位交通諮詢代理人，使用溫柔的口氣感謝使用者提供資訊更好釐清整個車禍，且指示使用者'請點選下一步'。";
+            }
+            else {
+                for (const key in responseData.incidentJson["車輛詳細狀況"]) {
+                    if (!responseData.incidentJson["車輛詳細狀況"][key]) {
+                        console.log(`key = ${key}`);
+                        questionkey = `你現在是一位交通事故諮詢的代理人，請詢問一個關於${key}的問題，你只需要提問此問題而不能回答任何問題也不問任何無關的問題。`;
+                        break;
+                    }
+                }
+            }
+
+            const questionMessage = [
+                { "role": "system", "content": questionkey },
+            ]
+            console.log("questionMessage is : ", questionMessage);
+
+            const gptResponse = await openai.createChatCompletion({
+                model: "gpt-3.5-turbo",
+                messages: questionMessage,
+                temperature: 0.1,
+                max_tokens: 1024,
+                top_p: 1,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+            });
+
+            const responseContent = gptResponse.data.choices[0].message.content;
+            responseData.question = responseContent;
+            const newContent = [
+                { character: 'questioner', value: userContent, createTime: createTime },
+                { character: 'chatBot', value: responseContent, createTime: createTime }
+            ]
+            responseData.chatContent.push(...newContent);
+
+            await dbTools.update(
+                collectionName = 'AccidentDetails',
+                query = { _id: new ObjectId(responseData._id) },
+                updateOperation = {
+                    $push: {
+                        chatContent: { $each: newContent }
+                    },
+                    $set: {
+                        incidentJson: responseData.incidentJson
+                    }
+                }
+            );
+
+            res.status(200).send(responseData);
+
+        }
+        else {
+
+            // 歸納JSON
+            const firstMessages = [
+                { "role": "system", "content": "你是一個車禍諮詢專家，有一問題與回答，有兩種問題。第一種若問題是\"是否有醫療費用單?\"若使用者回覆沒有，就將醫療費用單設為\"無\"，以下JSON格式的中費用欄位的值欄位填為0，若使用者回覆有，就將醫療費用單設為有，其他值欄位保持空白。第二種問題是問醫療費用或是看護天數，就將資訊歸納並加入以下完整的JSON格式中，非問題的欄位需保持不變，你必須回覆整個JSON格式且只能回答JSON格式，不需回答其他無關事物，例如:\"醫療費用\": \"5000元\"、\"看護天數\":\"10天\"。以下為現有JSON格式:" + JSON.stringify(requestData.incidentJson["醫療詳細狀況"]) },
+                { "role": "assistant", "content": requestData.question },
+                { "role": "user", "content": requestData.content }
+            ]
+
+            const firstgptResponse = await openai.createChatCompletion({
+                model: "gpt-3.5-turbo",
+                messages: firstMessages,
+                temperature: 0.1,
+                max_tokens: 1024,
+                top_p: 1,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+            });
+
+
+            try {
+                responseData.incidentJson["醫療詳細狀況"] = JSON.parse(firstgptResponse.data.choices[0].message.content);
+                console.log("responseData.incidentJson is : ", responseData.incidentJson["醫療詳細狀況"]);
+            } catch (error) {
+                console.error("🐛 chatGPTController - parse Json Failed:", error);
+            }
+
+            // 詢問問題
+            var questionkey = "";
+            if (responseData.incidentJson["醫療詳細狀況"]["是否有醫療費用單"] === "無") {
+                questionkey = "你是一位交通諮詢代理人，使用溫柔的口氣感謝使用者提供資訊更好釐清整個車禍，且指示使用者'請點選下一步'。";
+            }
+            else {
+                for (const key in responseData.incidentJson["醫療詳細狀況"]) {
+                    if (!responseData.incidentJson["醫療詳細狀況"][key]) {
+                        console.log(`key = ${key}`);
+                        questionkey = `你現在是一位交通事故諮詢的代理人，請詢問一個關於${key}的問題，你只需要提問而不需要回答任何問題。`;
+                        break;
+                    }
+                }
+            }
+
+            const questionMessage = [
+                { "role": "system", "content": questionkey },
+            ]
+            console.log("questionMessage is : ", questionMessage);
+
+            const gptResponse = await openai.createChatCompletion({
+                model: "gpt-3.5-turbo",
+                messages: questionMessage,
+                temperature: 0.1,
+                max_tokens: 1024,
+                top_p: 1,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+            });
+
+            const responseContent = gptResponse.data.choices[0].message.content;
+            responseData.question = responseContent;
+            const newContent = [
+                {
+                    character: 'questioner', value: userContent, createTime0
+                        : createTime
+                },
+                { character: 'chatBot', value: responseContent, createTime: createTime }
+            ]
+            responseData.chatContent.push(...newContent);
+
+            await dbTools.update(
+                collectionName = 'AccidentDetails',
+                query = { _id: new ObjectId(responseData.ids) },
+                updateOperation = {
+                    $push: {
+                        chatContent: { $each: newContent }
+                    },
+                    $set: {
+                        incidentJson: responseData.incidentJson
+                    }
+                }
+            );
+
+            res.status(200).send(responseData);
+        }
+
+
+    } catch (error) {
+        console.error("[carmedJSON] Error fetching from openAI:", error.message || error);
+        res.status(500).send(`[carmedJSON] Error fetching from OpenAI: ${error.message || error}`);
+    }
+}
+
+// -------------------- 詢問其他
+exports.otherJSON = async (req, res) => {
+
+    try {
+        // ResponseData.
+        //     content,
+        //     question,
+        //     incidentJson,
+        //     title,
+        //     _id,
+        //     chatContent,
+        //     selectSection
+
+
+        // - 獲得 OpenAI API
+        const configCrypto = new ConfigCrypto();
+        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
+        const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
+
+        // - 回傳資訊
+        var responseData = req.body;
+        const userContent = req.body.content;
+
+        // - 整理 request data
+        const requestData = req.body;
+
+        // - 呼叫資料庫 MongoDB
+        const dbTools = new MongoDB_Tools();
+
+        // - 取得台灣的即時時間
+        const taiwanTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" });
+        const createTime = new Date(taiwanTime).toISOString();
+
+        console.log("req.body is : ", req.body);
+
+        // 歸納JSON
+        const firstMessages = [
+            { "role": "system", "content": "你是一個車禍諮詢專家，有一問題與回答，你要依照問題與回答，歸納並加入現有的JSON格式，其餘無關問題的欄位保持不變。你必須回答整個JSON格式，且只能回答JSON格式。以下為現有JSON格式:" + JSON.stringify(requestData.incidentJson["其他費用賠償"]) },
+            { "role": "assistant", "content": requestData.question },
+            { "role": "user", "content": requestData.content }
+        ]
+        console.log("firstMessages is ", firstMessages);
+
+        const firstgptResponse = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: firstMessages,
+            temperature: 0.1,
+            max_tokens: 1024,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+        });
+
+
+        try {
+            responseData.incidentJson["其他費用賠償"] = JSON.parse(firstgptResponse.data.choices[0].message.content);
+            console.log("responseData.incidentJson is : ", responseData.incidentJson["其他費用賠償"]);
+        } catch (error) {
+            console.error("🐛 chatGPTController - parse Json Failed:", error);
+        }
+
+        // 詢問問題
+        var questionkey = "你是一位交通諮詢代理人，使用溫柔的口氣感謝使用者提供資訊更好釐清整個車禍，且指示使用者'請點選下一步'。";
+        for (const key in responseData.incidentJson["其他費用賠償"]) {
+            if (!responseData.incidentJson["其他費用賠償"][key]) {
+                console.log(`key = ${key}`);
+                questionkey = `你現在是一位交通事故諮詢的代理人，請詢問一個關於${key}的問題，你只需要提問此問題而不能回答任何問題也不問任何無關的問題。`;
+                break;
+            }
+        }
+
+        const questionMessage = [
+            { "role": "system", "content": questionkey },
+        ]
+        console.log("questionMessage is : ", questionMessage);
+
+        const gptResponse = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: questionMessage,
+            temperature: 0.1,
+            max_tokens: 1024,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+        });
+
+        const responseContent = gptResponse.data.choices[0].message.content;
+        responseData.question = responseContent;
+        const newContent = [
+            { character: 'questioner', value: userContent, createTime: createTime },
+            { character: 'chatBot', value: responseContent, createTime: createTime }
+        ]
+        responseData.chatContent.push(...newContent);
+
+        await dbTools.update(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(responseData._id) },
+            updateOperation = {
+                $push: {
+                    chatContent: { $each: newContent }
+                },
+                $set: {
+                    incidentJson: responseData.incidentJson
+                }
+            }
+        );
+
+        res.status(200).send(responseData);
+
+    } catch (error) {
+        console.error("[otherJSON] Error fetching from openAI:", error.message || error);
+        res.status(500).send(`[otherJSON] Error fetching from OpenAI: ${error.message || error}`);
+    }
+
+}
 // -------------------- 尋找相似判決
 exports.similarVerdict = async (req, res) => {
     try {
@@ -352,4 +642,6 @@ exports.getHappened = async (req, res) => {
 2:
 我當時從北投區出發，我的行進方向是綠燈，那天天氣晴朗，路況正常，我當時行駛車速大約50公里，我的車後燈損壞及車身有些擦傷。
 
+3:
+被告的車輛沒有損壞，也沒有受傷，那時我正要出發前往大安區工作。
 */

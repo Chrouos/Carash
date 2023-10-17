@@ -38,6 +38,7 @@ function Chat() {
       "出發的目的是什麼": "",
     },
     "車輛詳細狀況": {
+      "是否有修車估價單": "",
       "車輛出廠年月": "",
       "修車費用": "",
       "零件費用": "",
@@ -48,6 +49,7 @@ function Chat() {
       "烤漆費用": "",
     },
     "醫療詳細狀況": {
+      "是否有醫療費用單": "",
       "醫療費用": "",
       "看護費用": "",
       "看護天數": "",
@@ -116,10 +118,12 @@ function Chat() {
       "incidentJson": incidentJsonSiderValue,
       "title": currentTitle,
       "chatContent": chatContent,
+      "selectSection": selectSection,
     }
     if (currentIds) {
-      request['ids'] = currentIds;
+      request['_id'] = currentIds;
     }
+    console.log("request'ids is : ", request['_id']);
 
     // - 使用者先輸入內容後的顯示畫面
     setChatContent(prevContent => [...prevContent,
@@ -128,34 +132,99 @@ function Chat() {
     );
     setChatInputValue(null);
 
-    await axios
-      .post('/chatGPT/templateJSON', request, {
-        headers: authHeader(),
-      })
-      .then(response => {
+    if (selectSection === "車禍發生事故") {
+      await axios
+        .post('/chatGPT/templateJSON', request, {
+          headers: authHeader(),
+        })
+        .then(response => {
 
-        // - 修改狀態
-        setCurrentIds(response.data._id);
-        setCurrentTitle(response.data.title);
-        setQuestionvalue(response.data.question);
+          // - 修改狀態
+          setCurrentIds(response.data._id);
+          setCurrentTitle(response.data.title);
+          setQuestionvalue(response.data.question);
 
-        // - 對話紀錄的更改
-        const responseContent = response.data.chatContent;
-        setChatContent(responseContent);
+          // - 對話紀錄的更改
+          const responseContent = response.data.chatContent;
+          setChatContent(responseContent);
 
-        // - JSON 紀錄的修改
-        const myJsonResponse = response.data.incidentJson;
-        setIncidentJsonSiderValue(myJsonResponse);
-        setshowJsonSider(myJsonResponse["車禍發生事故"]);
+          // - JSON 紀錄的修改
+          const myJsonResponse = response.data.incidentJson;
+          setIncidentJsonSiderValue(myJsonResponse);
+          setshowJsonSider(myJsonResponse["車禍發生事故"]);
 
-        // - 防呆結束：防止二次輸入
-        setEnterStatus(true);
+          // - 防呆結束：防止二次輸入
+          setEnterStatus(true);
 
-      })
-      .then(() => {
-        fetchingTitle();
-      })
-      .catch(error => console.error('Error fetching data:', error));
+        })
+        .then(() => {
+          fetchingTitle();
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+    else if (selectSection === "車輛詳細狀況" || selectSection === "醫療詳細狀況") {
+
+      await axios
+        .post('/chatGPT/carmedJSON', request, {
+          headers: authHeader(),
+        })
+        .then(response => {
+
+          // - 修改狀態
+          setCurrentIds(response.data._id);
+          setCurrentTitle(response.data.title);
+          setQuestionvalue(response.data.question);
+
+          // - 對話紀錄的更改
+          const responseContent = response.data.chatContent;
+          setChatContent(responseContent);
+
+          // - JSON 紀錄的修改
+          const myJsonResponse = response.data.incidentJson;
+          setIncidentJsonSiderValue(myJsonResponse);
+          setshowJsonSider(myJsonResponse[`${selectSection}`]);
+
+          // - 防呆結束：防止二次輸入
+          setEnterStatus(true);
+
+        })
+        .then(() => {
+          fetchingTitle();
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+    else {
+
+      await axios
+        .post('/chatGPT/otherJSON', request, {
+          headers: authHeader(),
+        })
+        .then(response => {
+
+          // - 修改狀態
+          setCurrentIds(response.data._id);
+          setCurrentTitle(response.data.title);
+          setQuestionvalue(response.data.question);
+
+          // - 對話紀錄的更改
+          const responseContent = response.data.chatContent;
+          setChatContent(responseContent);
+
+          // - JSON 紀錄的修改
+          const myJsonResponse = response.data.incidentJson;
+          setIncidentJsonSiderValue(myJsonResponse);
+          setshowJsonSider(myJsonResponse[`${selectSection}`]);
+
+          // - 防呆結束：防止二次輸入
+          setEnterStatus(true);
+
+        })
+        .then(() => {
+          fetchingTitle();
+        })
+        .catch(error => console.error('Error fetching data:', error));
+
+    }
 
   }
 
@@ -198,7 +267,8 @@ function Chat() {
         setChatContent(response.data.chatContent);
         setIncidentJsonSiderValue(response.data.incidentJson);
         setCurrentTitle(response.data.title);
-        setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);
+        setshowJsonSider(response.data.incidentJson["車禍發生事故"]);
+        setSelectSection("車禍發生事故");
       })
       .catch(error => console.error('Error fetching data:', error));
   };
@@ -280,17 +350,37 @@ function Chat() {
     if (selectSection === "車禍發生事故") {
       setshowJsonSider(incidentJsonSiderValue["車輛詳細狀況"]);
       setSelectSection("車輛詳細狀況");
-      setIsInputEnabled(true);
+      setIsInputEnabled(false);
+
+      setChatContent(prevContent => [...prevContent,
+      { character: 'chatBot', value: "是否有修車估價單?", createTime: '2023-07-18T05:44:00' },
+      ]
+      );
+      setQuestionvalue("是否有修車估價單?");
+
     }
     else if (selectSection === "車輛詳細狀況") {
       setshowJsonSider(incidentJsonSiderValue["醫療詳細狀況"]);
       setSelectSection("醫療詳細狀況");
-      setIsInputEnabled(true);
+      setIsInputEnabled(false);
+
+      setChatContent(prevContent => [...prevContent,
+      { character: 'chatBot', value: "是否有醫療費用單?", createTime: '2023-07-18T05:44:00' },
+      ]
+      );
+      setQuestionvalue("是否有醫療費用單?");
+
     }
     else if (selectSection === "醫療詳細狀況") {
       setshowJsonSider(incidentJsonSiderValue["其他費用賠償"]);
       setSelectSection("其他費用賠償");
-      setIsInputEnabled(true);
+      setIsInputEnabled(false);
+
+      setChatContent(prevContent => [...prevContent,
+      { character: 'chatBot', value: "請問交通費用大約多少?", createTime: '2023-07-18T05:44:00' },
+      ]
+      );
+      setQuestionvalue("請問交通費用大約多少?");
     }
     else if (selectSection === "其他費用賠償") {
       setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);

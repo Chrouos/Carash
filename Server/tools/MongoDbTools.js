@@ -15,7 +15,7 @@ class MongoDB_Tools {
             MONGODB_DBNAME = 'CCG',
             MONGODB_AUTHSOURCE = 'CCG'
         } = this.configCrypto.config;
-        
+
         this.uri = `${MONGODB_PROTOCOL}://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/${MONGODB_DBNAME}?authSource=${MONGODB_AUTHSOURCE}`;
         console.log(this.uri)
         this.client = new MongoClient(this.uri, {
@@ -54,7 +54,7 @@ class MongoDB_Tools {
             const db = this.client.db("CCG");
             const collection = db.collection(collectionName);
             const result = await collection.insertOne(document);
-            return result.insertedId; 
+            return result.insertedId;
         } catch (error) {
             console.error("Error creating document:", error);
             return null;
@@ -76,9 +76,11 @@ class MongoDB_Tools {
     // - Update
     async update(collectionName, query, updateOperation) {
         try {
+            console.log("query = ", query);
             const db = this.client.db("CCG");
             const collection = db.collection(collectionName);
             const result = await collection.updateMany(query, updateOperation);
+            console.log("update result = ", result);
             return result;
         } catch (error) {
             console.error("Error updating document:", error);
@@ -110,7 +112,7 @@ class MongoDB_Tools {
             console.error("Error deleting all documents from collection:", error);
         }
     }
-    
+
 }
 
 module.exports = MongoDB_Tools;
