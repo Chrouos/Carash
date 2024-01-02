@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  carash-server:
+    build: 
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8280:8280"
+    container_name: carash-server
+
+  carash-client:
+    build: 
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "8230:8230"
+    container_name: carash-client
