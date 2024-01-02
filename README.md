@@ -60,3 +60,8 @@ docker exec -it carash-client /bin/bash # 啟動
 docker logs carash-client
 ```
 
+### Docker Compose
+```
+./run.sh
+```
+
