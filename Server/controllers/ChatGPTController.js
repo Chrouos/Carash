@@ -92,6 +92,29 @@ exports.templateJSON = async (req, res) => {
 
     try {
 
+
+        // 問題解釋格式
+        questionExplain = {
+            '事故發生日期': '描述事故發生的具體日期',
+            '事故發生時間': '描述事故發生的具體時間',
+            '事故發生地點': '發生地點地址哪條路',
+            '對方駕駛交通工具': '描述對方駕駛的交通工具種類',
+            '我方駕駛交通工具': '描述我方駕駛的交通工具種類',
+            '我方行駛道路': '指明我方行駛的具體道路',
+            '事發經過': '提供有關事故發生時的詳細經過描述',
+            '我方行進方向的號誌': '描述我方行駛方向的交通號誌狀態',
+            '當天天候': '描述事故發生當天的天氣情況',
+            '道路狀況': '提供有關道路狀況的資訊，例如是否有施工、是否濕滑等',
+            '我方行車速度': '描述我方行駛時的車速',
+            '我方車輛損壞情形': '描述我方車輛在事故中的損壞情況',
+            '我方傷勢': '描述我方在事故中的傷勢情況',
+            '對方車輛損壞情形': '描述對方車輛在事故中的損壞情況',
+            '對方傷勢': '描述對方在事故中的傷勢情況',
+            '我方從哪裡出發': '提供我方駕駛起點的資訊',
+            '我方出發目的地': '提供我方駕駛的目的地資訊',
+            '我方出發目的是什麼': '描述我方駕駛出發的原因或目的',
+        }
+
         // - 獲得 OpenAI API
         const configCrypto = new ConfigCrypto();
         const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
@@ -116,14 +139,17 @@ exports.templateJSON = async (req, res) => {
         console.log("req.body is : ", req.body);
         if (notNullCount == 0) {
 
+            // 初始模組
+            firstPrompt = "你現在是一件交通諮詢的專家，現在有一件交通事故的敘述，請你將資訊歸納成如下的json格式，如果沒有資料請保持欄位空白。我 = 原告，對方 = 被告。\n"
+            firstPrompt += "\n[JSON]\n" + JSON.stringify(requestData.incidentJson["車禍發生事故"])
             const firstMessages = [
-                { "role": "system", "content": "你現在是一件交通諮詢的專家，現在有一件交通事故的敘述，請你將資訊歸納成如下的json格式，如果沒有資料請保持欄位空白，歸納的資訊請說明成類判決書格式。我 = 原告，對方 = 被告" + JSON.stringify(requestData.incidentJson["車禍發生事故"]) },
+                { "role": "system", "content": firstPrompt },
                 { "role": "user", "content": requestData.content }
             ]
             console.log("firstMessages is ", firstMessages);
 
             const gptResponse = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
+                model: "gpt-3.5-turbo-1106",
                 messages: firstMessages,
                 temperature: 0.1,
                 max_tokens: 1024,
@@ -135,12 +161,13 @@ exports.templateJSON = async (req, res) => {
             // 回傳的有可能不是 JSON
             try {
                 responseData.incidentJson["車禍發生事故"] = JSON.parse(gptResponse.data.choices[0].message.content);
-                console.log("responseData.incidentJson is : ", responseData.incidentJson["車禍發生事故"]);
+                console.log("responseData.incidentJson is :\n", responseData.incidentJson["車禍發生事故"]);
             } catch (error) {
                 console.error("🐛 chatGPTController - parse Json Failed:", error);
             }
 
             // - 資料庫 第一次對話（因此需要產生聊天室）
+            /*
             const insertedId = await dbTools.create(
                 collectionName = 'AccidentDetails',
                 document = {
@@ -153,21 +180,23 @@ exports.templateJSON = async (req, res) => {
                     incidentJson: requestData.incidentJson
                 }
             )
-            responseData._id = insertedId.toString()
+            responseData._id = insertedId.toString()*/
         }
 
         // - 已經有部分資訊了: 詢問還未知曉的資訊 (GPT - 1)
         else {
 
-            const tidyMessage = [
-                { "role": "system", "content": "你是一位事件擷取機器人，現在有一問題與該問題的敘述和一個Json格式，請你將資訊歸納以及加入以下完整Json格式，若敘述中沒有提到的資訊則將此問題欄位留空，若敘述回答不知道則將此Json格式中的此問題欄位填入'未知'。你必須回答完整以下的Json格式且只回答Json格式，不要回答其餘無關事項。我是原告。" + JSON.stringify(requestData.incidentJson["車禍發生事故"]) },
-                { "role": "assistant", "content": requestData.question },
-                { "role": "user", "content": requestData.content } // 把目前車禍相關的 JSON 與 使用者回覆串接
-            ]
+            // 擷取模組
+            tidyPrompt = "你是一位事件擷取機器人，現在有一[問題]與該[問題回覆]和一個Json格式，請你將[問題回覆]找到適當的key值擷取並填入至以下完整Json格式，請勿改變與增加JSON格式。若敘述中沒有提到的資訊則將此問題欄位留空，若敘述回答忘記了則將此Json格式中的此問題欄位填入'未知'。你必須回答完整以下的Json格式且只回答Json格式，不要回答其餘無關事項。我是原告。\n"
+            tidyPrompt += "\n[JSON]\n" + JSON.stringify(requestData.incidentJson["車禍發生事故"])
+            tidyPrompt += "\n[問題]:\n" + requestData.question
+            tidyPrompt += "\n[問題回覆]:\n" + requestData.content
+            tidyPrompt += "\n[Json]:\n"
+            tidyMessage = [{ "role": "system", "content": tidyPrompt }]
             console.log("tidyMessages is : ", tidyMessage);
 
             const gptResponse = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
+                model: "gpt-3.5-turbo-1106",
                 messages: tidyMessage,
                 temperature: 0.1,
                 max_tokens: 1024,
@@ -184,24 +213,24 @@ exports.templateJSON = async (req, res) => {
             }
         }
 
-        var questionkey = "你是一位交通諮詢代理人，使用溫柔的口氣表達對當事人發生的事感到惋惜，並且指示他'請點選下一步'。";
+        // 提問模組
+        var questionKey = "你是一位交通諮詢代理人，使用溫柔的口氣表達對當事人發生的事感到惋惜，並且指示他'請點選下一步'。";
         for (const key in responseData.incidentJson["車禍發生事故"]) {
             if (!responseData.incidentJson["車禍發生事故"][key]) {
-                console.log(`key = ${key}`);
-                questionkey = `你現在是一位交通事故諮詢的代理人，請詢問一個關於${key}的問題給使用者，你只需要提問而不需要回答任何問題。`;
+                responseData.question = `詢問一個有關${key}的問題`
+                questionKey = `你現在是一位交通諮詢專家，負責詢問一個有關'${key}'的問題給當事人。你的任務目標是問一個問題，而你要問的問題要依照以下[問題解釋]中'${key}'的解釋。你只能問一個問題，例如回覆'請問事故發生日期是何時?'。我方是指當事人。\n`
+                questionKey += `[問題解釋] : '${key}'的意思是'${questionExplain[key]}'`
                 break;
             }
         }
 
-        // - 最後 GPT 的回覆格式
         const questionMessage = [
-            { "role": "system", "content": questionkey },
-            //{ "role": "user", "content": JSON.stringify(requestData.incidentJson["車禍發生事故"]) }
+            { "role": "system", "content": questionKey },
         ]
         console.log("questionMessage is : ", questionMessage);
 
         const gptResponse = await openai.createChatCompletion({
-            model: "gpt-3.5-turbo",
+            model: "gpt-3.5-turbo-1106",
             messages: questionMessage,
             temperature: 0.1,
             max_tokens: 1024,
@@ -210,9 +239,9 @@ exports.templateJSON = async (req, res) => {
             presence_penalty: 0,
         });
         const responseContent = gptResponse.data.choices[0].message.content;
+        console.log("responseContent : ", responseContent);
 
         // - 回傳結果
-        responseData.question = responseContent;
         const newContent = [
             { character: 'questioner', value: userContent, createTime: createTime },
             { character: 'chatBot', value: responseContent, createTime: createTime }
@@ -222,7 +251,7 @@ exports.templateJSON = async (req, res) => {
         // - 儲存至資料庫內部
 
         console.log("ids is : ", responseData._id);
-        await dbTools.update(
+        /*await dbTools.update(
             collectionName = 'AccidentDetails',
             query = { _id: new ObjectId(responseData._id) },
             updateOperation = {
@@ -233,7 +262,7 @@ exports.templateJSON = async (req, res) => {
                     incidentJson: responseData.incidentJson
                 }
             }
-        );
+        );*/
 
 
         res.status(200).send(responseData);
