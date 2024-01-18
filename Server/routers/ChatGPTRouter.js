@@ -8,6 +8,7 @@ app.post('/chatGPT/chat_test', chatGPTController.chat_test);
 app.post('/chatGPT/templateJSON', chatGPTController.templateJSON);
 app.post('/chatGPT/carmedJSON', chatGPTController.carmedJSON);
 app.post('/chatGPT/otherJSON', chatGPTController.otherJSON);
+app.post('/chatGPT/gptChat', chatGPTController.gptChat);
 
 // - 取得目前資料
 app.get('/chatGPT/getTitle', chatGPTController.getTitle);

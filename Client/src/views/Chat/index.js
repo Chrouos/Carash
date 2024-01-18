@@ -6,7 +6,7 @@ import authHeader from '../../store/auth-header';
 
 import React, { useState, useRef } from "react";
 import { Layout, Menu, Button, theme, Col, Row, Input, Form, Modal, Table } from "antd";
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined } from '@ant-design/icons';
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined, CaretRightFilled } from '@ant-design/icons';
 const { Column } = Table;
 const { Content, Sider, Header } = Layout;
 const { TextArea } = Input;
@@ -83,6 +83,7 @@ function Chat() {
   const [currentTitle, setCurrentTitle] = useState(""); // + Title
   const [currentIds, setCurrentIds] = useState(null); // + Ids
   const [questionValue, setQuestionvalue] = useState("");
+  const [judgementId, setJudgementId] = useState(1) // judgementId
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -273,6 +274,91 @@ function Chat() {
       .catch(error => console.error('Error fetching data:', error));
   };
 
+  // -------------------- 當事人Agent response
+  const gptChat = async () => {
+
+    // - 防呆：防止二次輸入
+    if (enterStatus === false) { return; }
+    setEnterStatus(false);
+
+    // API 內容
+    var request = {
+      "content": chatInputValue,
+      "chatContent": chatContent,
+      "judgementId": judgementId
+    }
+    var gptResponse = ""
+
+    await axios
+      .post('/chatGPT/gptChat', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+
+        // - 修改狀態
+        gptResponse = response.data.content;
+
+        // - 防呆結束：防止二次輸入
+        setEnterStatus(true);
+
+      })
+      .then(() => {
+      })
+      .catch(error => console.error('Error gptChat:', error));
+
+
+    // 輸入給CCG
+    var request = {
+      "content": gptResponse,
+      "question": questionValue,
+      "incidentJson": incidentJsonSiderValue,
+      "title": currentTitle,
+      "chatContent": chatContent,
+      "selectSection": selectSection,
+    }
+    if (currentIds) {
+      request['_id'] = currentIds;
+    }
+    console.log("request'ids is : ", request['_id']);
+
+    // - 使用者先輸入內容後的顯示畫面
+    setChatContent(prevContent => [...prevContent,
+    { character: 'questioner', value: chatInputValue, createTime: '2023-07-18T05:44:00' },
+    { character: 'chatBot', value: <LoadingOutlined style={{ fontSize: 24 }} spin />, createTime: '2023-07-18T05:44:00' }]
+    );
+    setChatInputValue(null);
+
+    await axios
+      .post('/chatGPT/templateJSON', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+
+        // - 修改狀態
+        setCurrentIds(response.data._id);
+        setCurrentTitle(response.data.title);
+        setQuestionvalue(response.data.question);
+
+        // - 對話紀錄的更改
+        const responseContent = response.data.chatContent;
+        setChatContent(responseContent);
+
+        // - JSON 紀錄的修改
+        const myJsonResponse = response.data.incidentJson;
+        setIncidentJsonSiderValue(myJsonResponse);
+        setshowJsonSider(myJsonResponse["車禍發生事故"]);
+
+        // - 防呆結束：防止二次輸入
+        setEnterStatus(true);
+
+      })
+      .then(() => {
+        fetchingTitle();
+      })
+      .catch(error => console.error('Error fetching data:', error));
+
+  }
+
   // -------------------- 預測金額頁面
   const showPredict = async () => {
 
@@ -344,7 +430,7 @@ function Chat() {
 
   };
 
-  // 更換左側顯示Json頁面
+  // -------------------- 更換左側顯示Json頁面
   const showNextJsonSider = () => {
 
     if (selectSection === "車禍發生事故") {
@@ -390,6 +476,7 @@ function Chat() {
 
   }
 
+  // -------------------- NewChat
   const createNewChat = () => {
     setCurrentIds(null);
     setCurrentTitle(null);
@@ -398,6 +485,8 @@ function Chat() {
     setIncidentJsonSiderValue(incidentTemplate);
     setshowJsonSider(incidentTemplate["車禍發生事故"]);
     setSelectSection("車禍發生事故");
+    setJudgementId(Math.round(Math.random() * 97))
+    console.log("judgementId = :", judgementId)
     console.log("now is createNewChat")
   };
 
@@ -454,6 +543,7 @@ function Chat() {
   // -------------------- 進入頁面後就直接執行
   React.useEffect(() => {
     fetchingTitle();
+    createNewChat();
   }, []) // 空陣列表示只在組件掛載時執行一次
 
   React.useEffect(() => {
@@ -558,6 +648,9 @@ function Chat() {
                       </Col>
                       <Col span={1} >
                         <Button icon={<EnterOutlined />} style={{ height: '100%' }} onClick={enterChatValue} ></Button>
+                      </Col>
+                      <Col span={1} >
+                        <Button icon={<CaretRightFilled />} style={{ height: '100%' }} onClick={gptChat} ></Button>
                       </Col>
                     </Row>
                   </div>
