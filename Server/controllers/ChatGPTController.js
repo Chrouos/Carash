@@ -172,7 +172,7 @@ exports.templateJSON = async (req, res) => {
             const insertedId = await dbTools.create(
                 collectionName = 'AccidentDetails',
                 document = {
-                    title: responseData.title || 'New ' + createTime,
+                    title: responseData.title || createTime,
                     chatContent: [{
                         character: 'chatBot',
                         value: "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
@@ -599,6 +599,7 @@ exports.otherJSON = async (req, res) => {
 
 }
 
+// -------------------- 當事人Agent
 exports.gptChat = async (req, res) => {
 
     /*
@@ -726,7 +727,33 @@ exports.getHappened = async (req, res) => {
     }
 }
 
+// ---------------- 獲得參考判決書內容
+exports.getJudgementText = async (req, res) => {
 
+    try {
+        // requestData = {
+        //     judgementId,
+        //     judgementText,
+        // }
+
+        const requestData = req.body;
+        var responseData = req.body;
+
+        const jsonData = require('./clean_random_100.json');
+        console.log(requestData.judgementId);
+        const cleanJudgement = jsonData[requestData.judgementId]['cleanJudgement'];
+        console.log(cleanJudgement);
+
+        responseData.judgementText = cleanJudgement;
+
+        res.status(200).send(responseData);
+    }
+    catch (error) {
+        console.error("[getJudgementText] Error :", error.message || error);
+        res.status(500).send(`[getJudgementText] Error : ${error.message || error}`);
+    }
+
+}
 
 
 /*

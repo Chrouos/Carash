@@ -13,7 +13,7 @@ app.use(express.json()); // Parse the JSON request body
 // -------------------- Server Settings
 const port = configCrypto.config.PORT || 8280;
 let hostname = configCrypto.config.HOSTNAME || 'localhost';
-const uri = configCrypto.config.MONGODB_URL || 'mongodb://localhost:27017';
+const uri = configCrypto.config.MONGODB_URL || 'mongodb://localhost:27027';
 
 // -------------------- MongoDB.
 // const MongoDB_Tools = require('./tools/MongoDbTools');
@@ -37,7 +37,7 @@ if (hostname === 'localhost') {
       }
     }
   }
-} 
+}
 
 app.listen(port, () => {
   console.log(`Server listening at http://${hostname}:${port}`);
@@ -69,6 +69,6 @@ app.get('/', (req, res) => {
 
 // const chromadb = new ChromaDB_Tools("Traffic_Advisory_Final");
 // chromadb.query({
-//   nResults: 2, 
+//   nResults: 2,
 //   queryTexts: ["被告駕駛車輛未注意讓行進中之車輛優先通行，撞及原告駕駛之機車，原告因緊急煞車而摔倒地，受傷害。"]
 // }) 

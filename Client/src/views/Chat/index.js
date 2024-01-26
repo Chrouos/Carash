@@ -55,13 +55,13 @@ function Chat() {
       "看護天數": "",
       "看護價格": "",
     },
-    "其他費用賠償": {
-      "交通費用": "",
-      "財產損失": "",
-      "營業損失": "",
-      "工作損失": "",
-      "精神賠償": "",
-    },
+    // "其他費用賠償": {
+    //   "交通費用": "",
+    //   "財產損失": "",
+    //   "營業損失": "",
+    //   "工作損失": "",
+    //   "精神賠償": "",
+    // },
   };
 
 
@@ -83,7 +83,8 @@ function Chat() {
   const [currentTitle, setCurrentTitle] = useState(""); // + Title
   const [currentIds, setCurrentIds] = useState(null); // + Ids
   const [questionValue, setQuestionvalue] = useState("");
-  const [judgementId, setJudgementId] = useState(1) // judgementId
+  const [judgementId, setJudgementId] = useState(1); // judgementId
+  const [judgementText, setJudgementText] = useState(""); //judgementText
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -274,6 +275,25 @@ function Chat() {
       .catch(error => console.error('Error fetching data:', error));
   };
 
+  // -------------------- 用judgementID獲得參考判決書內容
+  const fetchingJudgementText = async () => {
+
+    console.log("judgementId = :", judgementId)
+    const request = {
+      judgementId: judgementId,
+      judgementText: "",
+    }
+
+    await axios
+      .post('/chatGPT/getJudgementText', request, {
+        headers: authHeader(),
+      })
+      .then(response => {
+        setJudgementText(response.data.judgementText);
+      })
+      .catch(error => console.error('Error fetching JudgementText data :', error));
+  }
+
   // -------------------- 當事人Agent response
   const gptChat = async () => {
 
@@ -458,8 +478,8 @@ function Chat() {
 
     }
     else if (selectSection === "醫療詳細狀況") {
-      setshowJsonSider(incidentJsonSiderValue["其他費用賠償"]);
-      setSelectSection("其他費用賠償");
+      setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);
+      setSelectSection("車禍發生事故");
       setIsInputEnabled(false);
 
       setChatContent(prevContent => [...prevContent,
@@ -468,11 +488,11 @@ function Chat() {
       );
       setQuestionvalue("請問交通費用大約多少?");
     }
-    else if (selectSection === "其他費用賠償") {
-      setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);
-      setSelectSection("車禍發生事故");
-      setIsInputEnabled(false);
-    }
+    // else if (selectSection === "其他費用賠償") {
+    //   setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);
+    //   setSelectSection("車禍發生事故");
+    //   setIsInputEnabled(false);
+    // }
 
   }
 
@@ -487,6 +507,7 @@ function Chat() {
     setSelectSection("車禍發生事故");
     setJudgementId(Math.round(Math.random() * 97))
     console.log("judgementId = :", judgementId)
+    fetchingJudgementText();
     console.log("now is createNewChat")
   };
 
@@ -529,10 +550,12 @@ function Chat() {
     })
   };
 
+  // -------------------- Close Modal
   const handleModalClose = () => {
     setIsModalOpen(false);
   };
 
+  // -------------------- 偵測Enter
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -598,38 +621,62 @@ function Chat() {
             <Row gutter={[16, 8]} justify="space-evenly" style={{ height: '100%' }}>
 
               {/* 左邊: 案件資訊 */}
-              <Col span={contentLeftSide} className="code-box" style={{ overflow: 'auto' }} >
-                <div style={{ padding: '20px 10px 5px 10px' }}>
-                  <Form form={caseDetailForm} layout="vertical" >
+              <Col span={contentLeftSide} className="code-box">
 
-                    {<RenderFieldValue />}
+                {/* 上半部顯示Json */}
+                <Row style={{ height: '80%', overflow: 'auto' }}>
+                  <Col span={24}>
+                    <div style={{ padding: '20px 10px 5px 10px' }}>
+                      <Form form={caseDetailForm} layout="vertical" >
 
+                        {<RenderFieldValue />}
 
-                    <div style={{ textAlign: 'center' }}>
-                      <Button icon={<EnterOutlined />} onClick={showPredict}> 確認輸出內容 </Button>
-                      <Button icon={<EnterOutlined />} onClick={showNextJsonSider}> 下一步 </Button>
-                      <Modal
-                        width={'65%'}
-                        bodyStyle={{ height: '80vh', overflowY: 'auto' }}
-                        style={{ position: 'absolute', left: '15%', top: '5%' }}
-                        title="預測金額與相似判決"
-                        open={isModalOpen}
-                        onOk={handleModalClose}
-                        onClick={handleModalClose}
-                        onCancel={handleModalClose}
-                      >
-                        <div>
-                          {modalPredictorMoney}
-                          <br />
-                          {modalGetHappened}
-                          <br />
-                          {modalSimilarVerdict}
+                        <div style={{ textAlign: 'center' }}>
+                          <Button icon={<EnterOutlined />} onClick={showNextJsonSider}> 上一步 </Button>
+                          <Button icon={<EnterOutlined />} onClick={showPredict}> 結束送出 </Button>
+                          <Button icon={<EnterOutlined />} onClick={showNextJsonSider}> 下一步 </Button>
+
+                          {/* 結束預測介面 */}
+                          <Modal
+                            width={'65%'}
+                            bodyStyle={{ height: '80vh', overflowY: 'auto' }}
+                            style={{ position: 'absolute', left: '15%', top: '5%' }}
+                            title="預測金額與相似判決"
+                            open={isModalOpen}
+                            onOk={handleModalClose}
+                            onClick={handleModalClose}
+                            onCancel={handleModalClose}
+                          >
+                            <div>
+                              {modalPredictorMoney}
+                              <br />
+                              {modalGetHappened}
+                              <br />
+                              {modalSimilarVerdict}
+                            </div>
+                          </Modal>
+
                         </div>
-                      </Modal>
+                      </Form>
                     </div>
+                  </Col>
+                </Row>
 
-                  </Form>
-                </div>
+                {/* 下半部顯示判決書文本 */}
+                <Row style={{ height: '20%' }}>
+                  <Col span={24}>
+                    <div style={{ padding: '20px 10px 5px 10px' }}>
+                      <TextArea
+                        title='參考判決書內容'
+                        placeholder='Judgement Select'
+                        value={judgementText}
+                        autoSize={{ minRows: 5, maxRows: 5 }}
+                        readOnly
+                      />
+                    </div>
+                  </Col>
+                </Row>
+
               </Col>
 
               {/* 右邊: 對話框，由下到上排列  */}

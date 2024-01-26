@@ -11,7 +11,7 @@ class MongoDB_Tools {
             MONGODB_USERNAME = 'username',
             MONGODB_PASSWORD = 'password',
             MONGODB_HOST = 'localhost',
-            MONGODB_PORT = '27017',
+            MONGODB_PORT = '27027',
             MONGODB_DBNAME = 'CCG',
             MONGODB_AUTHSOURCE = 'CCG'
         } = this.configCrypto.config;
