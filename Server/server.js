@@ -15,12 +15,6 @@ const port = configCrypto.config.PORT || 8280;
 let hostname = configCrypto.config.HOSTNAME || 'localhost';
 const uri = configCrypto.config.MONGODB_URL || 'mongodb://localhost:27027';
 
-// -------------------- MongoDB.
-// const MongoDB_Tools = require('./tools/MongoDbTools');
-// const mongodb = new MongoDB_Tools();
-// mongodb.deleteAllFromCollection(collectionName = 'AccidentDetails')
-
-
 // -------------------- routers list
 const chatGPTRouter = require('./routers/ChatGPTRouter');
 const pythonRouter = require('./routers/PythonRouter');
@@ -54,6 +48,10 @@ app.get('/', (req, res) => {
 
 
 
+// -------------------- MongoDB.
+// const MongoDB_Tools = require('./tools/MongoDbTools');
+// const mongodb = new MongoDB_Tools();
+// mongodb.deleteAllFromCollection(collectionName = 'AccidentDetails')
 
 // -------------------- Chroma
 // const ChromaDB_Tools = require('./tools/ChromaTools');
