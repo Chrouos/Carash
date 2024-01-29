@@ -1,5 +1,5 @@
 module.exports = {
-    GPT_KEY: "ENC(9y4hkc9RPdIan7cCtvkjwkoo0nkpZiIgBhyUni0sEZ/W01g54w/InGEZqaE6rZjyri/R78hl/mEEBcP2qto6UlZXfUjFoFw5JLHxADWznBs=)", // encryption
+    GPT_KEY: "ENC(......)", // encryption
 
     PORT: 8280,
     HOSTNAME: "localhost",
