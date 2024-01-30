@@ -6,7 +6,7 @@ import authHeader from '../../store/auth-header';
 
 import React, { useState, useRef } from "react";
 import { Layout, Menu, Button, theme, Col, Row, Input, Form, Modal, Table } from "antd";
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined, CaretRightFilled } from '@ant-design/icons';
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, EnterOutlined, LoadingOutlined, CaretRightFilled, RightOutlined, LeftOutlined } from '@ant-design/icons';
 const { Column } = Table;
 const { Content, Sider, Header } = Layout;
 const { TextArea } = Input;
@@ -483,16 +483,56 @@ function Chat() {
       setIsInputEnabled(false);
 
       setChatContent(prevContent => [...prevContent,
-      { character: 'chatBot', value: "請問交通費用大約多少?", createTime: '2023-07-18T05:44:00' },
+      { character: 'chatBot', value: "請問車禍發生事故?", createTime: '2023-07-18T05:44:00' },
       ]
       );
-      setQuestionvalue("請問交通費用大約多少?");
+      setQuestionvalue("請問車禍發生事故?");
     }
     // else if (selectSection === "其他費用賠償") {
     //   setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);
     //   setSelectSection("車禍發生事故");
     //   setIsInputEnabled(false);
     // }
+
+  }
+
+  const showPreJsonSider = () => {
+
+    if (selectSection === "車禍發生事故") {
+      setshowJsonSider(incidentJsonSiderValue["醫療詳細狀況"]);
+      setSelectSection("醫療詳細狀況");
+      setIsInputEnabled(false);
+
+      setChatContent(prevContent => [...prevContent,
+      { character: 'chatBot', value: "是否有醫療費用單?", createTime: '2023-07-18T05:44:00' },
+      ]
+      );
+      setQuestionvalue("是否有醫療費用單?");
+
+    }
+    else if (selectSection === "車輛詳細狀況") {
+      setshowJsonSider(incidentJsonSiderValue["車禍發生事故"]);
+      setSelectSection("車禍發生事故");
+      setIsInputEnabled(false);
+
+      setChatContent(prevContent => [...prevContent,
+      { character: 'chatBot', value: "請問車禍發生事故?", createTime: '2023-07-18T05:44:00' },
+      ]
+      );
+      setQuestionvalue("請問車禍發生事故?");
+
+    }
+    else if (selectSection === "醫療詳細狀況") {
+      setshowJsonSider(incidentJsonSiderValue["車輛詳細狀況"]);
+      setSelectSection("車輛詳細狀況");
+      setIsInputEnabled(false);
+
+      setChatContent(prevContent => [...prevContent,
+      { character: 'chatBot', value: "是否有修車估價單?", createTime: '2023-07-18T05:44:00' },
+      ]
+      );
+      setQuestionvalue("是否有修車估價單?");
+    }
 
   }
 
@@ -632,9 +672,9 @@ function Chat() {
                         {<RenderFieldValue />}
 
                         <div style={{ textAlign: 'center' }}>
-                          <Button icon={<EnterOutlined />} onClick={showNextJsonSider}> 上一步 </Button>
+                          <Button icon={<LeftOutlined />} onClick={showPreJsonSider}> 上一步 </Button>
                           <Button icon={<EnterOutlined />} onClick={showPredict}> 結束送出 </Button>
-                          <Button icon={<EnterOutlined />} onClick={showNextJsonSider}> 下一步 </Button>
+                          <Button icon={<RightOutlined />} onClick={showNextJsonSider}> 下一步 </Button>
 
                           {/* 結束預測介面 */}
                           <Modal
