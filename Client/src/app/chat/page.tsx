@@ -1,3 +1,13 @@
+"use client";
+
+import React, { useState } from 'react';
+import { ScrollPanel } from 'primereact/scrollpanel';
+
 export default function Chat() {
-    return <h1>Here is chat!</h1>
+
+
+    return (<>
+        
+        
+    </>)
 }

@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"] });
-
 import { PrimeReactProvider } from 'primereact/api';
+// import "primereact/resources/themes/mira/theme.css";
 import 'primeicons/primeicons.css';
-import "primereact/resources/themes/mira/theme.css";
-
-
-import './globals.css'
-import Tailwind from 'primereact/passthrough/tailwind';
-import { twMerge } from 'tailwind-merge';
 
 import Header from "../components/header"
 import Footer from "../components/footer"
+import './globals.css'
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "CCG CollisionCareGuide",
@@ -28,13 +24,13 @@ export default function RootLayout({
 
     return (
         <html lang="en">
-            <body className={inter.className}>
+            <body className="min-h-screen bg-gray-200">
                 <PrimeReactProvider >
                     <Header />
 
                     {children}
 
-                    <Footer />
+                    {/* <Footer /> */}
                 </PrimeReactProvider>
             </body>
         </html>
