@@ -18,3 +18,7 @@ app.post('/chatGPT/similarVerdict', chatGPTController.similarVerdict);
 app.post('/chatGPT/getHappened', chatGPTController.getHappened);
 
 module.exports = app;
+
+
+
+

@@ -1,21 +1,23 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
 /Client/node_modules
 /Server/node_modules
+/temp/node_modules
 
+# Database
 /Database/
-*.pkl
-*.log
 /Server/lawsnote_project/log
-__pycache__/
-/node_modules
 Server/controllers/lawsnote_project/data/formal_test.json
 
+# Security 
 .env
 
+# Other File
 /.pnp
 .pnp.js
+*.pkl
+*.log
+__pycache__/
 
 
 # testing

@@ -1,3 +1,4 @@
 {
-    "commentTranslate.multiLineMerge": true
+    "CodeGPT.apiKey": "CodeGPT Plus Beta",
+    "git.ignoreLimitWarning": true
 }
