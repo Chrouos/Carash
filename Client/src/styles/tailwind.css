@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.parent {
+    min-height: calc(100vh - 3rem);
+}
+.min-h-inherit {
+    min-height: inherit;
+}

@@ -1,45 +1,89 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card } from 'primereact/card';
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
+import Image from 'next/image';
+
+import {
+    Col,
+    Row,
+    Layout,
+    Menu
+} from 'antd';
+const { Sider, Content } = Layout;
+
+import {
+    Card, CardHeader, CardBody, CardFooter, 
+    Divider, 
+    Input, Button
+} from "@nextui-org/react";
+
+import {
+    ArrowRightOutlined
+} from '@ant-design/icons';
+
 
 export default function Chat() {
 
     // ---------------------------------------- Variables ----------------------------------------
+    // : 畫面
+    const [colSizeDict, setColSizeListDict] = useState({generateFact_divSize: 9})
+    
+    // : 聊天內容
     const [chatInputText, setChatInputText] = useState<string>('');
-
+    const [sideBarCollapsed, setSideBarCollapsed] = useState(false);                  // = 聊天 Sidebar
     return (<>
-
-        {/* 選擇對話紀錄框 */}
-        <div></div>
-
-        <div className='flex min-h-screen '>
+    <Layout>
+        
+        <Sider width="5%"  style={{ background: "transparent" }} collapsed={true}>
+            
+        </Sider>
+        
+        <Content>
+            <div className='flex min-h-screen'>
 
             {/* 對話框 */}
-            <div className='grow bg-slate-300 justify-center grid content-between'>
-                <div className="max-w-xl pt-8">      
-                    <Card title="歡迎您使用 CCG 系統 !">
-                        <p>CCG的目的在於為您建立車禍事實經過，預測民事判決金額...</p>
-                        <p>= 民國... </p>
-                        <p>= 民國... </p>
-                        <p>= 民國... </p>
-                    </Card>
+            <Col xl={24} lg={24} md={24} sm={24} xs={24} className='bg-slate-400'>
+                <div className='grid content-between bg-slate-400 shrink w-full h-full'>
 
-                </div>  
+                    {/* 對話初始提示框 */}
+                    <div className="pt-8 pl-20 pr-20" id="div-chat-init-hint-container">      
+                        <Card>
+                            <CardHeader className="flex gap-3">
+                                <Image alt="ccg-icon" src="/ccg_icon.png" width="64" height="64" sizes="100vw" className="w-15 h-auto" priority={true} />
+                            </CardHeader>
 
-                <div className="max-w-xl h-20 pb-8 grid grid-cols-5 gap-4">
-                    <InputText className='h-full col-span-4' value={chatInputText} onChange={(e) => setChatInputText(e.target.value)} />
-                    <Button className='h-full col-span-1' label="Submit" />
+                            <Divider/>
+
+                            <CardBody>
+                                <p>一些範例</p>
+                            </CardBody>
+                        </Card>
+                    </div>  
+
+                    {/* 對話內容 */}
+                    <div id="div-chat-view-container">
+
+                    </div>
+
+
+                    {/* 輸入 */}
+                    <div className="flex gap-4 p-7" id="div-chat-input-container">
+                        <Input className='h-full' type="email" label="聊天內容" />
+                        <Button className='h-full w-12' isIconOnly variant="faded" aria-label="Take a photo"> <ArrowRightOutlined /> </Button>
+                    </div>
+
                 </div>
+            </Col>
 
-            </div>
+            {/* <Button isIconOnly> </Button> */}
 
             {/* 事實生成框 */}
-            <div className='grow-0 w-2/5 bg-stone-300'></div>
+            {/* <Col xl={colSizeDict.generateFact_divSize} lg={colSizeDict.generateFact_divSize} md={24} sm={24} xs={24} >
+                <div className='bg-stone-300'></div>
+            </Col> */}
 
-        </div>
-
+            </div> 
+        </Content>
+    </Layout>
     </>)
 }

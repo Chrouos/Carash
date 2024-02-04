@@ -1,19 +1,12 @@
-
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
-import { PrimeReactProvider } from 'primereact/api';
-import 'primeicons/primeicons.css';
+import { Providers } from "./(components)/Providers";
+import "../styles/tailwind.css";
 
-import "primereact/resources/themes/mira/theme.css";
-import Tailwind from 'primereact/passthrough/tailwind';
-
-import Header from "../components/header"
-import Footer from "../components/footer"
-import './globals.css'
+import { Header } from "./(components)/Header";
 
 const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
     title: "CCG CollisionCareGuide",
     description: "法律法遵機器人",
@@ -28,14 +21,12 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className="min-h-screen bg-gray-200">
-                <PrimeReactProvider>
-                {/* <PrimeReactProvider value={{ unstyled: true, pt: Tailwind }}> */}
-                    <Header />
+                <Providers >
+                    <Header></Header>
 
                     {children}
 
-                    <Footer />
-                </PrimeReactProvider>
+                </Providers>
             </body>
         </html>
     );
