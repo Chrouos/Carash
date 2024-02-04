@@ -33,13 +33,26 @@ def decrypt(encrypted_message: str, key: str) -> str:
     return decrypted_message.decode('utf-8')
 
 def main():
-    message = input("Enter the message to encrypt: ")
-    key = input("Enter the encryption key (at least 32 characters for AES-256): ")
     
-    encrypted = encrypt(message, key)
-    print("\nEncrypted Message (to be placed in config):")
-    print(f"ENC({encrypted})")
-    print(f"Validation value is {decrypt(encrypted, key)}")
+    require = input("Enter you Require (decrypt/encrypt):")
+    if require == "encrypt":
+        message = input("Enter the message to encrypt: ")
+        key = input("Enter the encryption key (at least 32 characters for AES-256): ")
+        
+        encrypted = encrypt(message, key)
+        print("\nEncrypted Message (to be placed in config):")
+        print(f"ENC({encrypted})")
+        print(f"Validation value is {decrypt(encrypted, key)}")
+        
+    elif require == "decrypt":
+        message = input("Enter the message to decrypt: ")
+        key = input("Enter the encryption key (at least 32 characters for AES-256): ")
+        
+        decrypted = decrypt(message, key)
+        print("\nDecrypt Message:", decrypt(message, key))
+        
+    else:
+        print("Please input the string  'decrypt' or 'encrypt'.")
 
 if __name__ == "__main__":
     main()
