@@ -1,4 +1,7 @@
 {
     "CodeGPT.apiKey": "CodeGPT Plus Beta",
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }

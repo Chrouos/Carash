@@ -18,8 +18,12 @@ const uri = configCrypto.config.MONGODB_URL || 'mongodb://localhost:27027';
 // -------------------- routers list
 const chatGPTRouter = require('./routers/ChatGPTRouter');
 const pythonRouter = require('./routers/PythonRouter');
+const accidentDetailsRouter = require('./routers/AccidentDetailsRouter');
+const usersRouter = require('./routers/UsersRouter');
 app.use(chatGPTRouter);
 app.use(pythonRouter);
+app.use(accidentDetailsRouter);
+app.use(usersRouter)
 
 
 // 檢查每個網絡接口，並尋找 IPv4 地址
