@@ -147,7 +147,6 @@ exports.templateJSON = async (req, res) => {
             const firstMessages = [
                 { "role": "system", "content": firstPrompt }
             ]
-            console.log("firstMessages is ", firstMessages);
 
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo-1106",

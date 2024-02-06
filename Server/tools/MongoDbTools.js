@@ -17,7 +17,6 @@ class MongoDB_Tools {
         } = this.configCrypto.config;
 
         this.uri = `${MONGODB_PROTOCOL}://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/${MONGODB_DBNAME}?authSource=${MONGODB_AUTHSOURCE}`;
-        console.log(this.uri)
         this.client = new MongoClient(this.uri, {
             serverApi: {
                 version: ServerApiVersion.v1,
@@ -76,11 +75,9 @@ class MongoDB_Tools {
     // - Update
     async update(collectionName, query, updateOperation) {
         try {
-            console.log("query = ", query);
             const db = this.client.db("CCG");
             const collection = db.collection(collectionName);
             const result = await collection.updateMany(query, updateOperation);
-            console.log("update result = ", result);
             return result;
         } catch (error) {
             console.error("Error updating document:", error);

@@ -11,7 +11,6 @@ const config: Config = {
     "./node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-
     extend: {
       "90vh": "90vh",
       "80vh": "80vh",

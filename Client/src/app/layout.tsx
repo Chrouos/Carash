@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import dynamic from 'next/dynamic';
 
 import { Layout,} from 'antd';
 
 import { Providers } from "./(components)/Providers";
 import "../styles/tailwind.css";
-
+const DynamicMessageProvider = dynamic(() => import('./(components)/MessageProvider'), {
+    ssr: false,
+});
 
 export const metadata: Metadata = {
     title: "CCG CollisionCareGuide",
@@ -15,13 +18,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
     return (
         <html lang="en">
-            <body className="min-h-screen">
+            <body className="min-h-screen" >
                 <Providers >
-
-                    {/* <Layout> */}
+                    <DynamicMessageProvider>
                         {children}
-                    {/* </Layout> */}
-
+                    </DynamicMessageProvider>
                 </Providers>
             </body>
         </html>

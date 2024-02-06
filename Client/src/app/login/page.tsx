@@ -12,18 +12,15 @@ import {Card, CardHeader, CardBody, CardFooter, Input} from "@nextui-org/react";
 import Image from 'next/image';
 import {Button, ButtonGroup} from "@nextui-org/react";
 
-// - antd
-import { message } from 'antd';
-
 // - self
 import "../../styles/login.css"
 import axios from '../(components)/(utils)/Axios';
 import authHeader from '../(components)/(store)/AuthHeader';
-
+import { useMessageContext } from '../(components)/(context)/MessageContext'; 
 
 export default function Login() {
 
-    const [messageApi, contextHolder] = message.useMessage();
+    const { messageApi } = useMessageContext();
     const router = useRouter()
 
     const [account, setAccount] = useState<string>("");
@@ -40,7 +37,7 @@ export default function Login() {
             const response = await axios.post('/users/loginAccount', request, { headers: authHeader() });
 
             if (response.data.isSuccesses) {
-                messageApi.info(response.data.message);
+                messageApi.success(response.data.message);
                 localStorage.setItem('user', JSON.stringify(response.data));
                 router.push('/chat');
             } else {
@@ -53,9 +50,6 @@ export default function Login() {
 
 
     return (<>
-
-        {contextHolder}
-
         <div className="h-screen grid place-content-center">
 
             <Card className="login-card">
@@ -94,7 +88,7 @@ export default function Login() {
             </Card>
 
         </div>
-        
+
     </>)
 
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { ContextType, useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import {
@@ -15,6 +15,7 @@ import {
     Card, CardHeader, CardBody, CardFooter, 
     Divider, 
     Input, Button,
+    Textarea
 } from "@nextui-org/react";
 
 import {
@@ -26,34 +27,102 @@ import SpeechBubbles from './(components)/SpeechBubbles';
 import axios from '../(components)/(utils)/Axios';
 import authHeader from '../(components)/(store)/AuthHeader';
 
+// : Date Template
+import { accidentDetails, AccidentDetailsType, ChatContentType} from 'data/accidentDetails';
+import { color } from 'framer-motion';
+
 export default function Chat() {
 
     // ---------------------------------------- Variables ----------------------------------------
+    const localStorageUser = JSON.parse(localStorage.getItem("user") || "");
+
     // : 畫面
     const [colSizeDict, setColSizeListDict] = useState({generateFact_divSize: 9})
     
-    // : 聊天內容
-    const [chatInputText, setChatInputText] = useState<string>(''); // = 輸入內容
+    // : 選單
+    const [titleSider, setTitlesSider] = useState([]) // = 對話歷史紀錄（所有標題）
     const [isChatHintOpen, setIsChatHintOpen] = useState<boolean>(false); // = 是否是初始對話（提示框）
-    const [titleSider, setTitlesSider] = useState([]) // = 對話紀錄
 
+    // : 聊天內容
+    const [userDescription, setUserDescription] = useState<string>(''); // = 輸入內容
+    const [ccgCurrentQuestion, setCCGCurrentQuestion] = useState<string>("車禍發生事故"); // = CCG 當前的問題類型
+    const [currentAccidentDetails, setCurrentAccidentDetails] = useState<AccidentDetailsType>(accidentDetails); // = 當前車禍資料內容
 
+    
     // ---------------------------------------- API ----------------------------------------
     
-    // ----- 獲得聊天記錄的標題
-    const fetchingTitle = async () => {
-        const request = {}
-        // await axios
-        //     .get('/chatGPT/getTitle')
-        //     .then(response => {
-        // })
-        // .catch(error => console.error('Error fetching data:', error));
+    // ----- 輸入對話內容
+    const API_retrievalContent = async (new_historyChatContent: ChatContentType[]) => {
+
+        const request = {
+            userDescription: userDescription,
+            verificationCode: localStorageUser?.verificationCode || "",
+            ccgQuestion: ccgCurrentQuestion,
+            incidentJson: currentAccidentDetails.incidentJson,
+            title: currentAccidentDetails.title,
+            _id: currentAccidentDetails._id,
+            historyChatContent: new_historyChatContent,
+        }
+
+        try {
+            const response = await axios.post('/accidentDetails/retrievalContent', request, { headers: authHeader() });
+            // @ 增加對話
+            setCurrentAccidentDetails(prevState => ({
+                ...prevState,
+                incidentJson: response.data.incidentJson,
+                historyChatContent: response.data.historyChatContent,
+                title: response.data.title,
+                _id: response.data._id
+            }));   
+
+        } catch (error) {
+            console.error('[enterChatValue] Error: ', error);
+        }
     }
 
-    fetchingTitle()
+    // -v- 加入聊天內容
+    const enterChatValue = () => {
+
+        setUserDescription("");
+
+        // @ 取得台灣的即時時間
+        const taiwanTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" });
+        const createTime = new Date(taiwanTime).toISOString();
+
+        // @ 增加對話
+        const newChat: ChatContentType = {
+            value: userDescription,
+            character: "questioner",
+            createTime: createTime
+        };
+
+        setCurrentAccidentDetails(prevState => ({
+            ...prevState,
+            historyChatContent: [...prevState.historyChatContent, newChat]
+        }));     
+
+        API_retrievalContent([...currentAccidentDetails.historyChatContent, newChat]);
+    }
+
+    // -v- 聊天內容輸出
+    const RenderDisplayChatContent = () => {
+        const renderList: JSX.Element[] = [];
+        currentAccidentDetails.historyChatContent.map((item, index) => {
+            return renderList.push(
+                <SpeechBubbles 
+                    key={index}
+                    character={item.character} 
+                    value={item.value}
+                    createTime={item.createTime} />
+            )
+        })
+
+        return renderList;
+    };
+
 
     // ---------------------------------------- Return ----------------------------------------
-    return (<> <Layout>
+    return (<> <Layout style={{backgroundColor: "#fffaf4"}} >
         <Sider width={200} collapsed={true} style={{overflow: 'auto', height: '100%' }}>
         {/* <Menu
             mode="inline"
@@ -70,8 +139,8 @@ export default function Chat() {
             <div className='flex min-h-screen'>
 
             {/* 對話框 */}
-            <Col xl={24} lg={24} md={24} sm={24} xs={24} className='bg-slate-400'>
-                <div className='grid content-between bg-slate-400 shrink w-full h-full'>
+            <Col xl={24} lg={24} md={24} sm={24} xs={24} >
+                <div className='grid content-between shrink w-full h-full'>
 
                     {/* 對話初始提示框 */}
                     {isChatHintOpen && 
@@ -91,14 +160,26 @@ export default function Chat() {
                     }
 
                     {/* 對話內容 */}
-                    <div className="pt-8 pl-20 pr-20 overflow-y-scroll no-scrollbar h-[80vh]" id="div-chat-view-container">
-                        {/* <SpeechBubbles character={"chatBot"} value='styled-components: it looks like an unknown prop "character" is being sent through to the DOM, which will likely trigger a React console error. If you would like automatic filtering of unknown props, you can opt-into that behavior via `<StyleSheetManager shouldForwardProp={...}>` (connect an API like `@emotion/is-prop-valid`) or consider using transient props (`$` prefix for automatic filtering.)'></SpeechBubbles> */}
+                    <div className="pt-8 pl-20 pr-20 overflow-y-scroll no-scrollbar" style={{height: "80vh"}} id="div-chat-view-container">
+                        <Card style={{height: "95%"}}>
+                            <RenderDisplayChatContent />
+                        </Card>
                     </div>
 
                     {/* 輸入 */}
                     <div className="flex gap-4 p-7" id="div-chat-input-container">
-                        <Input className='h-full' type="email" label="想輸入的內容...." />
-                        <Button className='h-full w-12' isIconOnly variant="faded" aria-label="Take a photo"> <ArrowRightOutlined /> </Button>
+                        <Textarea 
+                            className='h-full bg-white'
+                            label="想輸入的內容...."
+                            variant={"faded"}
+                            value={userDescription}
+                            onValueChange={setUserDescription} />
+                        <Button 
+                            className='h-full w-12 bg-white' variant="faded" 
+                            onPress={enterChatValue}
+                            isIconOnly > 
+                            <ArrowRightOutlined /> 
+                        </Button>
                     </div>
 
                 </div>

@@ -1,39 +1,35 @@
-export const accidentDetails = {
-    "title": "New 2024-01-21T15:46:55.000Z",
-    "chatContent": [
-        {
-            "character": "chatBot",
-            "value": "你好，我可以幫你什麼？\n請簡述你所知道的案件狀況，包含時間地點、人員傷勢、車況，事發情況等等... ",
-            "createTime": "2024-01-21T15:46:55.000Z"
-        },
-        {
-            "character": "questioner",
-            "value": "我在民國107年9月5日駕駛車牌號碼000-00號小貨車行經新北市○○區○○路與福慧路口處時，因未注意車前狀況而撞到了一輛由訴外人賴俊堯所駕駛的車牌號碼000-0000號租賃小客車。該車輛受損後修復費用為新臺幣109,470元。至於人員傷勢和其他車況情況，我不清楚。",
-            "createTime": "2024-01-21T15:46:55.000Z"
-        },
-        {
-            "character": "chatBot",
-            "value": "請問事故發生日期是何時？",
-            "createTime": "2024-01-21T15:46:55.000Z"
-        }
-    ],
-    "incidentJson": {
+export const accidentDetails: AccidentDetailsType = {
+    "_id": "",                  
+    "title": "",                
+    "historyChatContent": [
+        // {
+        //     "character": "questioner",
+        //     "value": "108年4月30日，大概早上十點多的時候，我騎重機在中山路附近行駛。有台轎車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。",
+        //     "createTime": "2024-02-06T12:28:45.000Z"
+        // },
+        // {
+        //     "character": "chatBot",
+        //     "value": "請問你方行進方向的號誌是什麼顏色？",
+        //     "createTime": "2024-02-06T12:28:45.000Z"
+        // }
+    ],   
+    "incidentJson": {           
         "車禍發生事故": {
-            "事故發生日期": "民國107年9月5日",
+            "事故發生日期": "",
             "事故發生時間": "",
-            "事故發生地點": "新北市○○區○○路與福慧路口",
-            "對方駕駛交通工具": "租賃小客車",
-            "我方駕駛交通工具": "小貨車",
-            "我方行駛道路": "○○路",
-            "事發經過": "因未注意車前狀況而撞到了對方車輛",
+            "事故發生地點": "",
+            "對方駕駛交通工具": "",
+            "我方駕駛交通工具": "",
+            "我方行駛道路": "",
+            "事發經過": "",
             "我方行進方向的號誌": "",
             "當天天候": "",
             "道路狀況": "",
             "我方行車速度": "",
-            "我方車輛損壞情形": "未提及",
-            "我方傷勢": "未提及",
-            "對方車輛損壞情形": "車輛受損後修復費用為新臺幣109,470元",
-            "對方傷勢": "未提及",
+            "我方車輛損壞情形": "",
+            "我方傷勢": "",
+            "對方車輛損壞情形": "",
+            "對方傷勢": "",
             "我方從哪裡出發": "",
             "我方出發目的地": "",
             "我方出發目的是什麼": ""
@@ -65,3 +61,23 @@ export const accidentDetails = {
         }
     }
 }
+
+
+interface ChatContentType {
+    value: string; 
+    character: "questioner" | "chatBot";
+    createTime: string;
+}
+
+interface AccidentDetailsType {
+    _id: string;
+    title: string;
+    historyChatContent: ChatContentType[];
+    incidentJson: {
+        [key: string]: {
+            [key: string]: string;
+        };
+    };
+}
+
+export type { AccidentDetailsType, ChatContentType };

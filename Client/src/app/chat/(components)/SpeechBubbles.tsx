@@ -2,28 +2,25 @@ import styled from 'styled-components';
 import React from 'react';
 
 import {
-    Card, CardHeader, CardBody, CardFooter, 
-    Divider, 
-    Input, Button,
-    Avatar, AvatarGroup, AvatarIcon
+    Avatar
 } from "@nextui-org/react";
-
 
 // 定義對話框容器的屬性類型
 interface ChatBoxContainerProps {
-    character: 'questioner' | 'chatBot';
+    $character: 'questioner' | 'chatBot';
 }
 
 // 定義對話泡泡的屬性類型
 interface SpeechBubblesProps {
     character: 'questioner' | 'chatBot';
     value: string;
+    createTime: string
 }
 
 // 對話框容器的樣式組件
 const SpeechBubblesContainer = styled.div<ChatBoxContainerProps>`
     display: flex;
-    justify-content: ${(props) => (props.character === 'questioner' ? 'flex-end' : 'flex-start')};
+    justify-content: ${(props) => (props.$character === 'questioner' ? 'flex-end' : 'flex-start')};
     padding: 9px 40px;
 `;
 
@@ -31,14 +28,14 @@ const SpeechBubblesContainer = styled.div<ChatBoxContainerProps>`
 const SpeechBubbleAndAvatar = styled.div<ChatBoxContainerProps>`
     
     display: flex;
-    flex-direction: ${(props) => (props.character === 'questioner' ? 'row-reverse' : 'row')};
+    flex-direction: ${(props) => (props.$character === 'questioner' ? 'row-reverse' : 'row')};
     align-items: center;
     gap: 22px;
 `;
 
 // 對話泡泡的樣式組件
 const SpeechBubblesValues = styled.p<ChatBoxContainerProps>`
-    background: ${(props) => (props.character === 'questioner' ? 'antiquewhite' : 'aliceblue')};
+    background: ${(props) => (props.$character === 'questioner' ? 'antiquewhite' : 'aliceblue')};
     max-width: 70%;
     width: fit-content;
     padding: 10px;
@@ -53,7 +50,7 @@ const SpeechBubblesValues = styled.p<ChatBoxContainerProps>`
         width: 0;
         height: 0;
         ${(props) =>
-            props.character === 'questioner'
+            props.$character === 'questioner'
             ? `
                 right: -10px;
                 border-top: 10px solid transparent;
@@ -69,16 +66,15 @@ const SpeechBubblesValues = styled.p<ChatBoxContainerProps>`
 `;
 
 // 對話泡泡組件
-const SpeechBubbles = ({ character, value }: SpeechBubblesProps) => {
+const SpeechBubbles = ({ character, value, createTime }: SpeechBubblesProps) => {
 
     const avatarImg = character == "questioner" ? "./user_icon.png" : "./ccg_icon.png"
-
     
     return (
-        <SpeechBubblesContainer character={character}>
-            <SpeechBubbleAndAvatar character={character}>
+        <SpeechBubblesContainer $character={character}>
+            <SpeechBubbleAndAvatar $character={character}>
                 <Avatar style={{backgroundColor: "white"}} isBordered radius="full" src={avatarImg} />
-                <SpeechBubblesValues character={character}>
+                <SpeechBubblesValues $character={character}>
                     {value}
                 </SpeechBubblesValues>
             </SpeechBubbleAndAvatar>
