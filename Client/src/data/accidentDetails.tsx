@@ -64,7 +64,7 @@ export const accidentDetails: AccidentDetailsType = {
 
 
 interface ChatContentType {
-    value: string; 
+    value: React.ReactNode;
     character: "questioner" | "chatBot";
     createTime: string;
 }

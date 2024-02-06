@@ -13,7 +13,7 @@ interface ChatBoxContainerProps {
 // 定義對話泡泡的屬性類型
 interface SpeechBubblesProps {
     character: 'questioner' | 'chatBot';
-    value: string;
+    value: React.ReactNode;
     createTime: string
 }
 
@@ -34,7 +34,7 @@ const SpeechBubbleAndAvatar = styled.div<ChatBoxContainerProps>`
 `;
 
 // 對話泡泡的樣式組件
-const SpeechBubblesValues = styled.p<ChatBoxContainerProps>`
+const SpeechBubblesValues = styled.div<ChatBoxContainerProps>`
     background: ${(props) => (props.$character === 'questioner' ? 'antiquewhite' : 'aliceblue')};
     max-width: 70%;
     width: fit-content;
