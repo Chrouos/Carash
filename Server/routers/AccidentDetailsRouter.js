@@ -3,6 +3,9 @@ const accidentDetailsController = require('../controllers/AccidentDetailsControl
 
 const app = Router();
 app.post('/accidentDetails/retrievalContent', accidentDetailsController.retrievalContent);
+app.post('/accidentDetails/getAccidentDetailsTitle', accidentDetailsController.getAccidentDetailsTitle);
+app.post('/accidentDetails/getContentAndJson', accidentDetailsController.getContentAndJson);
+
 
 
 module.exports = app;

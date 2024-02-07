@@ -61,16 +61,25 @@ class MongoDB_Tools {
     }
 
     // - Read
-    async read(collectionName, query, projection = {}) {
+    async read(collectionName, query, sort = {}, projection = {}, limit = null) {
         try {
             const db = this.client.db("CCG");
             const collection = db.collection(collectionName);
-            const result = await collection.find(query).project(projection).toArray();
+            let cursor = collection.find(query).project(projection).sort(sort);
+            
+            // 如果 limit 有有效值，則應用它
+            console.log(limit)
+            if (limit !== null && Number.isInteger(limit) && limit > 0) {
+                cursor = cursor.limit(limit);
+            }
+            
+            const result = await cursor.toArray();
             return result;
         } catch (error) {
             console.error("Error reading documents:", error);
         }
     }
+    
 
     // - Update
     async update(collectionName, query, updateOperation) {

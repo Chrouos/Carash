@@ -4,6 +4,7 @@ const ConfigCrypto = require('../tools/ConfigCrypto')
 const ChromaDB_Tools = require('../tools/ChromaTools');
 const MongoDB_Tools = require('../tools/MongoDbTools');
 const ObjectId = require("mongodb").ObjectId;
+const { getTaiwanTime, toISO, toHumanReadable } = require('../tools/TimeTools');
 
 // ----- 擷取對話 -> incidentJson.車禍發生事故
 exports.retrievalContent = async (req, res) => {
@@ -41,6 +42,13 @@ exports.retrievalContent = async (req, res) => {
             '我方出發目的是什麼': '描述我方駕駛出發的原因或目的',
         }
 
+        // - 取得台灣的即時時間
+        const currentTaiwanTime = getTaiwanTime();
+        const createTime = toHumanReadable(currentTaiwanTime);
+
+        // - 呼叫資料庫 MongoDB
+        const mongoDB = new MongoDB_Tools();
+
         // - 獲得 OpenAI API
         const configCrypto = new ConfigCrypto();
         const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
@@ -52,19 +60,12 @@ exports.retrievalContent = async (req, res) => {
         // - 回傳資訊
         var responseData = {
             _id: requestData._id || "",
-            title: requestData.title || requestData.userDescription, 
+            title: requestData.title || createTime + " - " + requestData.userDescription, 
             historyChatContent: requestData.historyChatContent || [],
             verificationCode: requestData.verificationCode || "",
             incidentJson: requestData.incidentJson || {},
             ccgCurrentQuestion: requestData.ccgCurrentQuestion || ""
         };
-
-        // - 呼叫資料庫 MongoDB
-        const mongoDB = new MongoDB_Tools();
-
-        // - 取得台灣的即時時間
-        const taiwanTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" });
-        const createTime = new Date(taiwanTime).toISOString();
 
         // - 目前還未有任何資訊: 第一次對話
         if (Object.values(requestData.incidentJson["車禍發生事故"]).filter(value => value !== "").length == 0) {
@@ -181,4 +182,48 @@ exports.retrievalContent = async (req, res) => {
 }
 
 
+// -----  獲得標題
+exports.getAccidentDetailsTitle = async (req, res) => {
+
+    try {
+
+        var responseData = {}; // = 定義回傳變數
+        const verificationCode = req.body.verificationCode || "";
+
+        const dbTools = new MongoDB_Tools();
+        const titles = await dbTools.read(
+            collectionName = 'AccidentDetails', 
+            query = {verificationCode: verificationCode}, 
+            sort = {"historyChatContent.createTime": -1}, // 根據對話的最新時間排序
+            projection = { title: 1 });
+
+        responseData.titles = titles
+        res.status(200).send(responseData);
+
+    } catch (error) {
+        res.status(500).send(`[getAccidentDetailsTitle] Error: ${error.message || error}`);
+    }
+
+}
+
+// ----- 根據 Id 獲得該所有內容
+exports.getContentAndJson = async (req, res) => {
+    try {
+
+        var responseData = {}; // = 定義回傳變數
+
+        // - 車禍 Json 的資料取出
+        const dbTools = new MongoDB_Tools();
+        responseData = await dbTools.read(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(req.body._id) },
+            limit = "1",
+        )
+
+        res.status(200).send(responseData[0]);
+    } catch (error) {
+        res.status(500).send(`[getContentAndJson] Error: ${error.message || error}`);
+    }
+
+}
 
