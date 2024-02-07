@@ -34,7 +34,7 @@ import "../../styles/loading.css"
 
 import { getTaiwanTime, toHumanReadable } from 'utils/TimeTw';
 import axios from '../../utils/Axios';
-import authHeader from '../../components/store/AuthHeader';
+import authHeader from '../../Provider/store/AuthHeader';
 
 // - Date Template
 import { accidentDetails, AccidentDetailsType, ChatContentType} from 'data/accidentDetails';
@@ -219,7 +219,6 @@ export default function Chat() {
     // ---------------------------------------- Return ----------------------------------------
     return (<> 
     <Layout>
-        {/* flex flex-wrap min-h-screen */}
         <Sider width="5%" className='' style={{ background: "#9c9c9c37" }} collapsed={true}>
 
             <Menu
@@ -238,6 +237,7 @@ export default function Chat() {
             </div>
 
         </Sider>
+        
         <Content className='flex flex-wrap min-h-screen'>
             
             {/*  */}

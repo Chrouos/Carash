@@ -3,9 +3,9 @@ import dynamic from 'next/dynamic';
 
 import { ProLayout } from '@ant-design/pro-components';
 
-import { Providers } from "../components/Providers";
+import { Providers } from "../Provider/Providers";
 import "../styles/tailwind.css";
-const DynamicMessageProvider = dynamic(() => import('../components/MessageProvider'), {
+const DynamicMessageProvider = dynamic(() => import('../Provider/MessageProvider'), {
     ssr: false,
 });
 

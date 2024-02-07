@@ -15,8 +15,11 @@ import {Button, ButtonGroup} from "@nextui-org/react";
 // - self
 import "../../styles/login.css"
 import axios from '../../utils/Axios';
-import authHeader from '../../components/store/AuthHeader';
-import { useMessageContext } from '../../components/context/MessageContext'; 
+import authHeader from '../../Provider/store/AuthHeader';
+import { useMessageContext } from '../../Provider/context/MessageContext'; 
+
+import { EyeFilledIcon } from 'components/EyeFilledIcon';
+import { EyeSlashFilledIcon } from 'components/EyeSlashFilledIcon';
 
 export default function Login() {
 
@@ -26,6 +29,9 @@ export default function Login() {
     const [account, setAccount] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     
+    const [isVisible, setIsVisible] = useState(false);
+    const toggleVisibility = () => setIsVisible(!isVisible);
+
     // ----- 獲得聊天記錄的標題
     const loginAccount = async () => {
         const request = {
@@ -51,6 +57,10 @@ export default function Login() {
         }
     }
 
+    // -v- 換頁
+    const changePageToRegister = () => {
+        router.push('/register');
+    }
 
     return (<>
         <div className="h-screen grid place-content-center">
@@ -65,26 +75,39 @@ export default function Login() {
                     <Input 
                         className="login-input" 
                         label="Account"
+                        variant="bordered"
                         value={account}
                         onValueChange={setAccount} />
                     <Input 
                         className="login-input" 
                         label="Password"
+                        variant="bordered"
                         value={password}
+                        endContent={
+                            <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
+                                {isVisible ? (
+                                    <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                                ) : (
+                                    <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                                )}
+                            </button>
+                        }
+                        type={isVisible ? "text" : "password"}
                         onValueChange={setPassword} />
 
                     <div className="gap-5 flex">
+                        <Button 
+                            className="login-button"
+                            onPress={changePageToRegister}>
+                            Register
+                        </Button>
+
                         <Button 
                             className="login-button" 
                             onPress={loginAccount} 
                             isDisabled={account == "" || password == "" }> 
                             Submit
                         </Button>
-                        <Link href="/register">
-                            <Button className="login-button">
-                                Register
-                            </Button>
-                        </Link>
                     </div>
                 </div>
 

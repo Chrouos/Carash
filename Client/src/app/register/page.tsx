@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react";
+import Cookies from 'js-cookie'
 
 // - nextJs
 import Link from 'next/link'
@@ -14,8 +15,8 @@ import {Button, ButtonGroup} from "@nextui-org/react";
 // - self
 import "../../styles/login.css"
 import axios from '../../utils/Axios';
-import authHeader from '../../components/store/AuthHeader';
-import { useMessageContext } from '../../components/context/MessageContext'; 
+import authHeader from '../../Provider/store/AuthHeader';
+import { useMessageContext } from '../../Provider/context/MessageContext'; 
 
 export default function Login() {
 
@@ -37,8 +38,7 @@ export default function Login() {
             .then(response => {
                 if (response.data.isSuccesses) {
                     messageApi.success(response.data.message);
-                    localStorage.setItem('user', JSON.stringify(response.data));
-                    router.push('/chat');
+                    router.push('/login');
                 } else {
                     messageApi.error(response.data.message);
                 }
@@ -46,6 +46,10 @@ export default function Login() {
         .catch(error => console.error('Error fetching data:', error));
     }
 
+    // -v- 換頁
+    const changePageToLogin = () => {
+        router.push('/login');
+    }
 
     return (<>
         <div className="h-screen grid place-content-center">
@@ -80,12 +84,11 @@ export default function Login() {
                         onValueChange={setNickName} />
 
                     <div className="gap-5 flex">
-                        <Link href="/login">
-                            <Button 
-                                className="login-button" > 
-                                Return
-                            </Button>
-                        </Link>
+                        <Button 
+                            className="login-button" 
+                            onPress={changePageToLogin} > 
+                            Return
+                        </Button>
                         <Button 
                             className="login-button" 
                             onPress={registerAccount} 
