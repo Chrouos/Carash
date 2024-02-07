@@ -35,7 +35,7 @@ import { accidentDetails, AccidentDetailsType, ChatContentType} from 'data/accid
 export default function Chat() {
 
     // ---------------------------------------- Variables ----------------------------------------
-    const localStorageUser = JSON.parse(localStorage.getItem("user") || "");
+    // const localStorageUser = JSON.parse(localStorage.getItem("user") || {});
 
     // : 畫面
     const [colSizeDict, setColSizeListDict] = useState({rightPanel_divSize: 0})
@@ -58,7 +58,7 @@ export default function Chat() {
 
         const request = {
             userDescription: userDescription,
-            verificationCode: localStorageUser?.verificationCode || "",
+            // verificationCode: localStorageUser?.verificationCode || "",
             ccgCurrentQuestion: ccgCurrentQuestion,
             incidentJson: currentAccidentDetails.incidentJson,
             title: currentAccidentDetails.title,
