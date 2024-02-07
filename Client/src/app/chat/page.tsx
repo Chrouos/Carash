@@ -145,6 +145,14 @@ export default function Chat() {
         API_fetchAccidentDetailsContent(_id);
     }
 
+    // -v- 開啟新的對話
+    const createNewConversation = () => {
+        // @ 復原所有內容
+        setCurrentAccidentDetails(accidentDetails);
+        setUserDescription("");
+        setCCGCurrentQuestion("");
+    }
+
     // -v- 加入聊天內容
     const enterChatValue = () => {
 
@@ -215,11 +223,29 @@ export default function Chat() {
         API_fetchAccidentDetailsTitle(); // = 獲得標題
     }, [])
 
+    // => 偵測Enter
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        // 確保在按下 Enter 鍵時，用戶描述不是空的，並且沒有按下 Shift 鍵
+        if (e.key === 'Enter' && e.shiftKey && userDescription.trim() !== '') {
+            e.preventDefault();
+            enterChatValue();
+        }
+    };
 
     // ---------------------------------------- Return ----------------------------------------
     return (<> 
     <Layout>
         <Sider width="5%" className='' style={{ background: "#9c9c9c37" }} collapsed={true}>
+
+            <div className='pb-5 justify-center flex'>
+                <Button  
+                    className='top-2 min-w-10 h-16'
+                    onPress={createNewConversation}> 
+                    NEW 
+                </Button>
+            </div>
+
+            <Divider className='mt-2 mb-2' />
 
             <Menu
                 style={{background: "transparent"}}
@@ -262,14 +288,18 @@ export default function Chat() {
                                                 priority={true} />
                                             <p>
                                                 你好，歡迎來到 CCG，我是你的法律法遵機器人。請問有什麼我可以幫你的嗎？ <br />
+                                                請主要描述車禍當時的情況（包含地址、時間、路段、天氣...等）
                                                 以下是一些詢問範例
                                             </p>
                                         </CardHeader>
 
                                         <Divider/>
 
-                                        <CardBody>
-                                            <p>描述車禍當時的情況...</p>
+                                        <CardBody >
+                                            <div>
+                                                <p className='text-base'>&#8658; 108年4月30日，大概早上十點多的時候，我騎重機在中山路附近行駛。有台轎車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。</p>
+                                                <p className='text-base'>&#8658; 我當時從北投區出發，我的行進方向是綠燈，那天天氣晴朗，路況正常，我當時行駛車速大約50公里，我的車後燈損壞及車身有些擦傷。</p>
+                                            </div>
                                         </CardBody>
                                     </Card>
                                 </div>  
@@ -286,7 +316,9 @@ export default function Chat() {
                             label="想輸入的內容...."
                             variant={"faded"}
                             value={userDescription}
-                            onValueChange={setUserDescription} />
+                            onValueChange={setUserDescription}
+                            placeholder='Shift + Enter 可直接傳送'
+                            onKeyDown={handleKeyDown} />
                         <Button 
                             className='h-full w-12 bg-white' variant="faded" 
                             onPress={enterChatValue}

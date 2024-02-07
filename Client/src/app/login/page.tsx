@@ -62,6 +62,14 @@ export default function Login() {
         router.push('/register');
     }
 
+    // => 偵測Enter
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            loginAccount();
+        }
+    };
+
     return (<>
         <div className="h-screen grid place-content-center">
 
@@ -77,7 +85,8 @@ export default function Login() {
                         label="Account"
                         variant="bordered"
                         value={account}
-                        onValueChange={setAccount} />
+                        onValueChange={setAccount}
+                        onKeyDown={handleKeyDown} />
                     <Input 
                         className="login-input" 
                         label="Password"
@@ -93,7 +102,8 @@ export default function Login() {
                             </button>
                         }
                         type={isVisible ? "text" : "password"}
-                        onValueChange={setPassword} />
+                        onValueChange={setPassword}
+                        onKeyDown={handleKeyDown} />
 
                     <div className="gap-5 flex">
                         <Button 
