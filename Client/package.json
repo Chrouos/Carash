@@ -10,12 +10,14 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.0",
+    "@ant-design/pro-components": "^2.6.49",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@nextui-org/react": "^2.2.9",
     "antd": "^5.14.0",
     "axios": "^1.6.7",
     "dotenv": "^16.4.1",
     "framer-motion": "^11.0.3",
+    "js-cookie": "^3.0.5",
     "next": "14.1.0",
     "primeicons": "^6.0.1",
     "react": "^18",
@@ -24,6 +26,7 @@
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

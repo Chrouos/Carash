@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import dynamic from 'next/dynamic';
 
-import { Layout,} from 'antd';
+import { ProLayout } from '@ant-design/pro-components';
 
-import { Providers } from "./(components)/Providers";
+import { Providers } from "../components/Providers";
 import "../styles/tailwind.css";
-const DynamicMessageProvider = dynamic(() => import('./(components)/MessageProvider'), {
+const DynamicMessageProvider = dynamic(() => import('../components/MessageProvider'), {
     ssr: false,
 });
 

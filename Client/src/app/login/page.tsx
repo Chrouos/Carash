@@ -1,6 +1,6 @@
 
 "use client"
-
+import Cookies from 'js-cookie'
 import { useState } from "react";
 
 // - nextJs
@@ -14,9 +14,9 @@ import {Button, ButtonGroup} from "@nextui-org/react";
 
 // - self
 import "../../styles/login.css"
-import axios from '../(components)/(utils)/Axios';
-import authHeader from '../(components)/(store)/AuthHeader';
-import { useMessageContext } from '../(components)/(context)/MessageContext'; 
+import axios from '../../utils/Axios';
+import authHeader from '../../components/store/AuthHeader';
+import { useMessageContext } from '../../components/context/MessageContext'; 
 
 export default function Login() {
 
@@ -38,7 +38,10 @@ export default function Login() {
 
             if (response.data.isSuccesses) {
                 messageApi.success(response.data.message);
-                localStorage.setItem('user', JSON.stringify(response.data));
+
+                localStorage.setItem('verificationCode', response.data.verificationCode);
+                Cookies.set('verificationCode', response.data.verificationCode, { expires: 2 }); // cookie有效期2天
+
                 router.push('/chat');
             } else {
                 messageApi.error(response.data.message);

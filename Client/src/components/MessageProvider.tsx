@@ -2,7 +2,7 @@
 "use client";
 
 import React, { ReactNode } from 'react';
-import MessageContext from './(context)/MessageContext'; // 確保路徑正確
+import MessageContext from './context/MessageContext'; // 確保路徑正確
 import { message } from 'antd';
 
 interface MessageProviderProps {

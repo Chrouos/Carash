@@ -2,7 +2,10 @@
 
 import React, { ContextType, useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie'
 
+// - Antd
 import {
     Col,
     Row,
@@ -12,6 +15,11 @@ import {
 const { Sider, Content } = Layout;
 
 import {
+    ArrowRightOutlined, FileOutlined, PoweroffOutlined
+} from '@ant-design/icons';
+
+// - NextUI
+import {
     Card, CardHeader, CardBody, CardFooter, 
     Divider, 
     Input, Button,
@@ -19,29 +27,28 @@ import {
     Tabs, Tab
 } from "@nextui-org/react";
 
-import {
-    ArrowRightOutlined
-} from '@ant-design/icons';
-
-// : 自己寫的元件
+// - 自己寫的元件
 import SpeechBubbles from './(components)/SpeechBubbles';
-import axios from '../(components)/(utils)/Axios';
-import authHeader from '../(components)/(store)/AuthHeader';
+import AccidentDetailJson from './(components)/AccidentDetailJson';
 import "../../styles/loading.css"
 
-// : Date Template
+import { getTaiwanTime, toHumanReadable } from 'utils/TimeTw';
+import axios from '../../utils/Axios';
+import authHeader from '../../components/store/AuthHeader';
+
+// - Date Template
 import { accidentDetails, AccidentDetailsType, ChatContentType} from 'data/accidentDetails';
 
 export default function Chat() {
 
     // ---------------------------------------- Variables ----------------------------------------
-    // const localStorageUser = JSON.parse(localStorage.getItem("user") || {});
+    const router = useRouter()
 
     // : 畫面
     const [colSizeDict, setColSizeListDict] = useState({rightPanel_divSize: 0})
     
     // : 選單
-    const [titleSider, setTitlesSider] = useState([]) // = 對話歷史紀錄（所有標題）
+    const [titlesSider, setTitlesSider] = useState<{ key: string, label: string, icon: JSX.Element }[]>([]); // = 對話歷史紀錄（所有標題）
 
     // : 聊天內容
     const [userDescription, setUserDescription] = useState<string>(''); // = 使用者當前輸入的內容
@@ -54,11 +61,11 @@ export default function Chat() {
     // ---------------------------------------- API ----------------------------------------
     
     // ----- 輸入對話內容
-    const API_retrievalContent = async (new_historyChatContent: ChatContentType[]) => {
+    const API_retrievalContent = async (new_historyChatContent: ChatContentType[], isNewConversation: boolean) => {
 
         const request = {
             userDescription: userDescription,
-            // verificationCode: localStorageUser?.verificationCode || "",
+            verificationCode: localStorage.getItem("verificationCode")|| "",
             ccgCurrentQuestion: ccgCurrentQuestion,
             incidentJson: currentAccidentDetails.incidentJson,
             title: currentAccidentDetails.title,
@@ -67,6 +74,7 @@ export default function Chat() {
         }
 
         try {
+
             const response = await axios.post('/accidentDetails/retrievalContent', request, { headers: authHeader() });
 
             // @ 增加對話
@@ -77,6 +85,9 @@ export default function Chat() {
                 title: response.data.title,
                 _id: response.data._id
             }));   
+
+            // @ 刷新 titleSlider
+            if (isNewConversation) { API_fetchAccidentDetailsTitle(); }
             
             // @ 更新當前問題   
             setCCGCurrentQuestion(response.data.ccgCurrentQuestion)
@@ -86,34 +97,85 @@ export default function Chat() {
         }
     }
 
+    // ----- 獲得資料標題
+    const API_fetchAccidentDetailsTitle = async () => {
+
+        const request = {
+            verificationCode: localStorage.getItem("verificationCode") || "",
+        }
+
+        try {
+            const response = await axios.post('/accidentDetails/getAccidentDetailsTitle', request, { headers: authHeader() });
+            const newTitleSider = response.data.titles.map((item: {_id: string, title: string}, index: number) => {               
+                return {
+                    key: item._id,
+                    label: item.title,
+                    icon: <FileOutlined />
+                }
+            })
+            setTitlesSider(newTitleSider);
+
+        } catch (error) {
+            console.error('[enterChatValue] Error: ', error);
+        }
+    }
+
+    // ----- 從 Sider 選擇標題後得到內容
+    const API_fetchAccidentDetailsContent = async (_id: string) => {
+        
+        const request = { _id }
+
+        try {
+            const response = await axios.post('/accidentDetails/getContentAndJson', request, { headers: authHeader() });
+            setCurrentAccidentDetails(prevState => ({
+                // ...prevState,
+                incidentJson: response.data.incidentJson,
+                historyChatContent: response.data.historyChatContent,
+                title: response.data.title,
+                _id: response.data._id
+            }));   
+
+        } catch (error) {
+            console.error('[enterChatValue] Error: ', error);
+        }
+    }
+
+    // -v- 點選 Sider 事件
+    const chooseDiffAccidentDetails = (_id: string) => {
+        API_fetchAccidentDetailsContent(_id);
+    }
+
     // -v- 加入聊天內容
     const enterChatValue = () => {
 
-        setUserDescription("");
+        try {
+            setUserDescription("");
 
-        // @ 取得台灣的即時時間
-        const taiwanTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" });
-        const createTime = new Date(taiwanTime).toISOString();
+            // @ 取得台灣的即時時間
+            const taiwanTime = getTaiwanTime();
+            const createTime = toHumanReadable(taiwanTime);
 
-        // @ 使用者的新對話內容
-        const userNewChat: ChatContentType = {
-            value: userDescription,
-            character: "questioner",
-            createTime: createTime
-        };
+            // @ 使用者的新對話內容
+            const userNewChat: ChatContentType = {
+                value: userDescription,
+                character: "questioner",
+                createTime: createTime
+            };
 
-        const chatBotLoading: ChatContentType = {
-            value: <div className="loader" style={{fontSize: "15px"}} ></div>,
-            character: "chatBot",
-            createTime: createTime
+            const chatBotLoading: ChatContentType = {
+                value: <div className="loader" style={{fontSize: "15px"}} ></div>,
+                character: "chatBot",
+                createTime: createTime
+            }
+
+            // @ 更新畫面 & API 呼叫
+            API_retrievalContent([...currentAccidentDetails.historyChatContent, userNewChat], currentAccidentDetails.historyChatContent.length == 0);
+            setCurrentAccidentDetails(prevState => ({
+                ...prevState,
+                historyChatContent: [...prevState.historyChatContent, userNewChat, chatBotLoading]
+            }));     
         }
-
-        // @ 更新畫面 & API 呼叫
-        API_retrievalContent([...currentAccidentDetails.historyChatContent, userNewChat]);
-        setCurrentAccidentDetails(prevState => ({
-            ...prevState,
-            historyChatContent: [...prevState.historyChatContent, userNewChat, chatBotLoading]
-        }));     
+        catch (error) { }
     }
 
     // -v- 聊天內容輸出
@@ -140,23 +202,45 @@ export default function Chat() {
         }))
     }
 
+    // -v- 登出
+    const logOut = () => {
+        localStorage.removeItem('verificationCode');
+        Cookies.remove('verificationCode');
+
+        router.push('/');
+    }
+
+    // => 初始化讀取
+    useEffect(() => {
+        API_fetchAccidentDetailsTitle(); // = 獲得標題
+    }, [])
+
 
     // ---------------------------------------- Return ----------------------------------------
-    return (<> <Layout style={{backgroundColor: "#fffaf4"}} >
-        <Sider width={200} collapsed={true} style={{overflow: 'auto', height: '100%' }}>
-        {/* <Menu
-            mode="inline"
-            items={titlesSider}
-            onClick={(e) => { fetchingContentJson(e.key) }}
-        /> */}
-        </Sider>
+    return (<> 
+    <Layout>
+        {/* flex flex-wrap min-h-screen */}
+        <Sider width="5%" className='' style={{ background: "#9c9c9c37" }} collapsed={true}>
 
-        {/* <Sider width="5%"  style={{ background: "transparent" }} collapsed={true}>
+            <Menu
+                style={{background: "transparent"}}
+                mode="inline"
+                items={titlesSider}
+                onClick={(e) => { chooseDiffAccidentDetails(e.key) }}
+            />
             
-        </Sider> */}
-        
-        <Content>
-            <div className='flex min-h-screen'>
+            <div className='justify-center flex'>
+                <Button 
+                    className='absolute bottom-2 bg-transparent rounded-full border-2 border-slate-600 text-xl min-w-10'
+                    onPress={logOut}> 
+                    <PoweroffOutlined />
+                </Button>
+            </div>
+
+        </Sider>
+        <Content className='flex flex-wrap min-h-screen'>
+            
+            {/*  */}
 
             {/* 對話框 */}
             <Col xl={24-colSizeDict.rightPanel_divSize} lg={24-colSizeDict.rightPanel_divSize} md={24} sm={24} xs={24} >
@@ -214,15 +298,19 @@ export default function Chat() {
 
                 {/* 事實生成框大小調整 */}
                 <Button 
-                    color="default" 
+                    color={"default"}
                     size="sm" 
-                    className='absolute -right-2 inset-y-1/2 z-10 min-w-2 max-w-2 min-h-16 max-h-16 '
-                    onPress={changeGenerateFact_divSize} />
+                    variant= { colSizeDict.rightPanel_divSize == 0 ? "solid" : "ghost"}
+                    className='lg:absolute lg:right-0 lg:inset-y-1/2 lg:z-10 lg:min-w-4 lg:min-h-20 hidden lg:block'
+                    onPress={changeGenerateFact_divSize} >
+                    {colSizeDict.rightPanel_divSize == 0 ? String.fromCharCode(8592) : String.fromCharCode(8594)}                    
+                </Button>
             </Col>
 
             {/* 事實生成框 rightPanel*/}
             <Col xl={colSizeDict.rightPanel_divSize} lg={colSizeDict.rightPanel_divSize} md={24} sm={24} xs={24} >
-                <div className='h-full p-10 overflow-y-scroll no-scrollbar'>
+                <Divider />
+                <div className='w-full h-full p-10 overflow-y-scroll no-scrollbar'>
 
                     <Tabs 
                         aria-label='Options'
@@ -236,16 +324,22 @@ export default function Chat() {
                                     <p className="text-small text-default-500">經過模組還原的事實</p>
                                 </CardHeader>
                                 <Divider/>
+
+
                             </Card>
                         </Tab>
 
                         <Tab key="事件細節" title="事件細節">
                             <Card style={{height: "83vh"}}>
+
                                 <CardHeader className="flex gap-3">
                                     <p className="text-md">事件細節</p>
                                     <p className="text-small text-default-500">條列式事件細節</p>
                                 </CardHeader>
                                 <Divider/>
+
+                                <AccidentDetailJson 
+                                    accidentDetails={currentAccidentDetails}/>
                             </Card>
                         </Tab>
 
@@ -253,8 +347,9 @@ export default function Chat() {
                 </div>
             </Col>
 
-            </div> 
+            
         </Content>
-    </Layout> </>)
+    </Layout> 
+    </>)
 }
 

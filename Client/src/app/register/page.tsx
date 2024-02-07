@@ -13,9 +13,9 @@ import {Button, ButtonGroup} from "@nextui-org/react";
 
 // - self
 import "../../styles/login.css"
-import axios from '../(components)/(utils)/Axios';
-import authHeader from '../(components)/(store)/AuthHeader';
-import { useMessageContext } from '../(components)/(context)/MessageContext'; 
+import axios from '../../utils/Axios';
+import authHeader from '../../components/store/AuthHeader';
+import { useMessageContext } from '../../components/context/MessageContext'; 
 
 export default function Login() {
 
