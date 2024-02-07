@@ -1,6 +1,7 @@
 "use client";
 
-import React, { ContextType, useEffect, useState } from 'react';
+// - System Preferences
+import React, { ContextType, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
@@ -8,15 +9,13 @@ import Cookies from 'js-cookie'
 // - Antd
 import {
     Col,
-    Row,
     Menu,
     Layout
 } from 'antd';
 const { Sider, Content } = Layout;
 
-import {
-    ArrowRightOutlined, FileOutlined, PoweroffOutlined
-} from '@ant-design/icons';
+// - Antd Icon
+import { ArrowRightOutlined, FileOutlined, PoweroffOutlined } from '@ant-design/icons';
 
 // - NextUI
 import {
@@ -55,8 +54,11 @@ export default function Chat() {
     const [ccgCurrentQuestion, setCCGCurrentQuestion] = useState<string>("車禍發生事故"); // = CCG 當前的問題
     const [currentAccidentDetails, setCurrentAccidentDetails] = useState<AccidentDetailsType>(accidentDetails); // = 當前車禍資料內容
 
+    const historyChatContentRef = useRef<HTMLDivElement>(null); // = 對話內容的 REF
+
     // : 生成視窗框
-    const [rightPanelSelect, setRightPanelSelect] = useState<string>("事件細節")
+    const [rightPanelSelect, setRightPanelSelect] = useState<string>("事件細節"); // = 目前選擇的 rightPanel
+    const [currentChooseType, setCurrentChooseType] = useState<string>(""); // = 目前選擇的 AccidentDetails 類別
     
     // ---------------------------------------- API ----------------------------------------
     
@@ -71,6 +73,7 @@ export default function Chat() {
             title: currentAccidentDetails.title,
             _id: currentAccidentDetails._id,
             historyChatContent: new_historyChatContent,
+            currentChooseType: currentChooseType
         }
 
         try {
@@ -134,6 +137,7 @@ export default function Chat() {
                 title: response.data.title,
                 _id: response.data._id
             }));   
+            setCCGCurrentQuestion(response.data.historyChatContent[response.data.historyChatContent.length - 1].value)
 
         } catch (error) {
             console.error('[enterChatValue] Error: ', error);
@@ -177,7 +181,7 @@ export default function Chat() {
             }
 
             // @ 更新畫面 & API 呼叫
-            API_retrievalContent([...currentAccidentDetails.historyChatContent, userNewChat], currentAccidentDetails.historyChatContent.length == 0);
+            API_retrievalContent([...currentAccidentDetails.historyChatContent], currentAccidentDetails.historyChatContent.length == 0);
             setCurrentAccidentDetails(prevState => ({
                 ...prevState,
                 historyChatContent: [...prevState.historyChatContent, userNewChat, chatBotLoading]
@@ -232,11 +236,21 @@ export default function Chat() {
         }
     };
 
+    // => 讓對話內容如果更動保持在最下面
+    useEffect(() => {
+        if (historyChatContentRef.current) {
+            historyChatContentRef.current.scrollTop = historyChatContentRef.current.scrollHeight;
+        }
+    }, [currentAccidentDetails.historyChatContent]);
+
     // ---------------------------------------- Return ----------------------------------------
-    return (<> 
-    <Layout>
+    return (<>  <Layout>
+
+        {/* 左邊 Sider */}
         <Sider width="5%" className='' style={{ background: "#9c9c9c37" }} collapsed={true}>
 
+
+            {/* 全新對話 */}
             <div className='pb-5 justify-center flex'>
                 <Button  
                     className='top-2 min-w-10 h-16'
@@ -245,15 +259,18 @@ export default function Chat() {
                 </Button>
             </div>
 
+            {/* 分隔線 */}
             <Divider className='mt-2 mb-2' />
 
+            {/* 選擇對話紀錄 */}
             <Menu
                 style={{background: "transparent"}}
                 mode="inline"
                 items={titlesSider}
                 onClick={(e) => { chooseDiffAccidentDetails(e.key) }}
             />
-            
+
+            {/* 登出 */}
             <div className='justify-center flex'>
                 <Button 
                     className='absolute bottom-2 bg-transparent rounded-full border-2 border-slate-600 text-xl min-w-10'
@@ -264,16 +281,16 @@ export default function Chat() {
 
         </Sider>
         
+        {/* 右邊 Content */}
         <Content className='flex flex-wrap min-h-screen'>
             
-            {/*  */}
-
             {/* 對話框 */}
             <Col xl={24-colSizeDict.rightPanel_divSize} lg={24-colSizeDict.rightPanel_divSize} md={24} sm={24} xs={24} >
+                {/* 對話框 */}
                 <div className='grid content-between shrink w-full h-full'>
 
                     {/* 對話內容 */}
-                    <div className="pt-8 pl-20 pr-20 overflow-y-scroll no-scrollbar" style={{height: "80vh"}} id="div-chat-view-container">
+                    <div className="pt-8 pl-20 pr-20 " style={{height: "80vh"}} id="div-chat-view-container">
                         <Card style={{height: "95%"}}>
 
                             {/* 對話初始提示框 */}
@@ -304,8 +321,10 @@ export default function Chat() {
                                     </Card>
                                 </div>  
                             }
-
-                            <RenderDisplayChatContent />
+                            
+                            <div className='overflow-y-auto' ref={historyChatContentRef}>
+                                <RenderDisplayChatContent />
+                            </div>
                         </Card>
                     </div>
 
@@ -328,7 +347,7 @@ export default function Chat() {
                     </div>
                 </div>
 
-                {/* 事實生成框大小調整 */}
+                {/* 事實生成框大小調整按鈕 */}
                 <Button 
                     color={"default"}
                     size="sm" 
@@ -343,11 +362,7 @@ export default function Chat() {
             <Col xl={colSizeDict.rightPanel_divSize} lg={colSizeDict.rightPanel_divSize} md={24} sm={24} xs={24} >
                 <Divider />
                 <div className='w-full h-full p-10 overflow-y-scroll no-scrollbar'>
-
-                    <Tabs 
-                        aria-label='Options'
-                        selectedKey={rightPanelSelect}
-                        onSelectionChange={(key) => setRightPanelSelect(String(key))} >
+                    <Tabs aria-label='Options' selectedKey={rightPanelSelect} onSelectionChange={(key) => setRightPanelSelect(String(key))} >
                         
                         <Tab key="事實生成" title="事實生成">
                             <Card style={{height: "83vh"}}>
@@ -371,7 +386,9 @@ export default function Chat() {
                                 <Divider/>
 
                                 <AccidentDetailJson 
-                                    accidentDetails={currentAccidentDetails}/>
+                                    accidentDetails={currentAccidentDetails}
+                                    currentChooseType={currentChooseType}
+                                    setCurrentChooseType={setCurrentChooseType} />
                             </Card>
                         </Tab>
 
@@ -381,7 +398,7 @@ export default function Chat() {
 
             
         </Content>
-    </Layout> 
-    </>)
+
+    </Layout>  </>)
 }
 

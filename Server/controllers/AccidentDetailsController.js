@@ -96,7 +96,7 @@ exports.retrievalContent = async (req, res) => {
                 collectionName = 'AccidentDetails',
                 document = {
                     title: responseData.title,
-                    historyChatContent: responseData.historyChatContent,
+                    historyChatContent: [],
                     incidentJson: responseData.incidentJson,
                     verificationCode: requestData.verificationCode
                 }
@@ -156,7 +156,10 @@ exports.retrievalContent = async (req, res) => {
         responseData.ccgCurrentQuestion = responseContent;
 
         // - 回傳結果
-        const newContent = [ { character: 'chatBot', value: responseContent, createTime: createTime } ]
+        const newContent = [ 
+            { character: 'questioner', value: requestData.userDescription, createTime: createTime } ,
+            { character: 'chatBot', value: responseContent, createTime: createTime } 
+        ]
         responseData.historyChatContent.push(...newContent);
 
         // - 儲存至資料庫內部
@@ -180,7 +183,6 @@ exports.retrievalContent = async (req, res) => {
         res.status(500).send(`[templateJSON] Error fetching from OpenAI: ${error.message || error}`);
     }
 }
-
 
 // -----  獲得標題
 exports.getAccidentDetailsTitle = async (req, res) => {

@@ -7,13 +7,17 @@ import {Button, Input, Divider} from "@nextui-org/react";
 import { AccidentDetailsType} from 'data/accidentDetails';
 
 
-const AccidentDetailJson = ({accidentDetails}: {accidentDetails: AccidentDetailsType}) => {
+interface AccidentDetailJsonProps {
+    accidentDetails: AccidentDetailsType;
+    currentChooseType: string;
+    setCurrentChooseType: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const AccidentDetailJson: React.FC<AccidentDetailJsonProps> = ({ accidentDetails, currentChooseType, setCurrentChooseType }) => {
+
     
     // ---------------------------------------- Variables ----------------------------------------
     const [accidentDetailsTypes, setAccidentDetailsTypes] = useState<string[]>([]); // = AccidentDetails 類別
-    const [currentChooseType, setCurrentChooseType] = useState<string>(""); // = 目前選擇的 AccidentDetails 類別
-
-    const [currentPage, setCurrentPage] = useState<string>(""); // = 目前頁數 (選擇類別，查看細項)
 
     // -v- 顯示類型板塊
     const RenderDisplayAccidentDetailsType = () => {
@@ -35,7 +39,7 @@ const AccidentDetailJson = ({accidentDetails}: {accidentDetails: AccidentDetails
         const currentAccidentDetailsType = Object.keys(accidentDetails.incidentJson);
         setAccidentDetailsTypes(currentAccidentDetailsType);
         setCurrentChooseType(currentAccidentDetailsType[0])
-    }, [accidentDetails]);
+    }, [accidentDetails, setCurrentChooseType]);
 
 
     // -v- 顯示細項板塊
