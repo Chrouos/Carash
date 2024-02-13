@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+
     // 從請求中獲取cookie
     const token = request.cookies.get('verificationCode');
+    
 
     // 檢查是否存在token，這裡的token代表用戶的登入狀態
     if (!token) {
@@ -24,5 +26,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/', '/login', '/chat', '/register'], // 或其他你需要保護的路由
+    matcher: ['/', '/login', '/chat'], // 或其他你需要保護的路由
 };
