@@ -72,7 +72,9 @@ exports.retrievalContent = async (req, res) => {
         if (Object.values(requestData.incidentJson["車禍發生事故"]).filter(value => value !== "").length == 0) {
 
             // + 初始模組
-            const { firstPrompt } = require("./data/prompt")
+            const { firstPromptModule } = require("./data/prompt")
+            var firstPrompt = firstPromptModule(requestData);
+            
             const firstMessages = [ { "role": "system", "content": firstPrompt } ]
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo-1106",
@@ -105,7 +107,9 @@ exports.retrievalContent = async (req, res) => {
         else {
 
             // + 擷取模組
-            const { tidyPrompt } = require("./data/prompt")
+            const { tidyPromptModule } = require("./data/prompt")
+            var tidyPrompt = tidyPromptModule(requestData);
+
             tidyMessage = [{ "role": "system", "content": tidyPrompt }]
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo-1106",
@@ -123,8 +127,8 @@ exports.retrievalContent = async (req, res) => {
         }
 
         // + 提問模組
-        const { generateQuestionKey } = require("./data/prompt")
-        var questionKey = generateQuestionKey(responseData, questionExplain);
+        const { generateQuestionKeyModule } = require("./data/prompt")
+        var questionKey = generateQuestionKeyModule(responseData, questionExplain);
 
         const questionMessage = [ { "role": "system", "content": questionKey }, ]
         const gptResponse = await openai.createChatCompletion({
@@ -255,7 +259,7 @@ exports.RefactorEvent = async (req, res) => {
             query = { _id: new ObjectId(requestData._id) },
             updateOperation = {
                 $set: {
-                    refactorHappened: responseData.happened
+                    refactorHappened: responseData.refactorHappened
                 }
             }
         );
@@ -264,7 +268,6 @@ exports.RefactorEvent = async (req, res) => {
 
     }
     catch (error) {
-        console.error("[getHappened] Error :", error.message || error);
-        res.status(500).send(`[getHappened] Error : ${error.message || error}`);
+        res.status(500).send(`[RefactorEvent] Error: ${error.message || error}`);
     }
 }
