@@ -111,6 +111,9 @@ export default function Chat() {
             // @ 更新當前問題   
             setCCGCurrentQuestion(response.data.ccgCurrentQuestion)
 
+            // @ 重構還原事件
+            refactorEvent(response.data._id)
+
         } catch (error) {
             console.error('[API_retrievalContent] Error: ', error);
         } finally {
@@ -176,9 +179,9 @@ export default function Chat() {
     }
 
     // ----- 從 Json 中還原事實經過
-    const API_refactorEvent = async () => {
+    const API_refactorEvent = async (_id: string) => {
         const request = { 
-            _id: currentAccidentDetails._id,
+            _id: _id || currentAccidentDetails._id,
             incidentJson: currentAccidentDetails.incidentJson
         }
 
@@ -204,12 +207,12 @@ export default function Chat() {
     }
 
     // -v- 還原事發經過
-    const refactorEvent = () => {
+    const refactorEvent = (_id: string) => {
         setCurrentAccidentDetails(prevState => ({
             ...prevState,
             refactorHappened: "重構還原事發經過中..."
         }));  
-        API_refactorEvent();
+        API_refactorEvent(_id);
     }
 
     // -v- 開啟新的對話
@@ -248,13 +251,11 @@ export default function Chat() {
             }
 
             // @ 更新畫面 & API 呼叫
-            API_retrievalContent([...currentAccidentDetails.historyChatContent], currentAccidentDetails.historyChatContent.length == 0);
+            API_retrievalContent([...currentAccidentDetails.historyChatContent], currentAccidentDetails.historyChatContent.length == 0);;
             setCurrentAccidentDetails(prevState => ({
                 ...prevState,
                 historyChatContent: [...prevState.historyChatContent, userNewChat, chatBotLoading]
             }));     
-
-            refactorEvent();
         }
         catch (error) { }
     }
@@ -461,8 +462,9 @@ export default function Chat() {
                                     <br/><br/>
                                     <div className='flex justify-center gap-6 w-full p-2 absolute bottom-0 ' style={{backdropFilter: "blur(2px)"}}>
                                         <Button 
-                                            onPress={refactorEvent}
-                                            isLoading={ loadingStates?.API_refactorEvent } >
+                                            onPress={(e) => {refactorEvent(currentAccidentDetails._id)}}
+                                            isLoading={ loadingStates?.API_refactorEvent }
+                                            disabled={currentAccidentDetails._id == ""} >
                                             重新還原事實 
                                         </Button>
                                         <Button >
