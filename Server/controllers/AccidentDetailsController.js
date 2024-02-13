@@ -69,7 +69,8 @@ exports.retrievalContent = async (req, res) => {
         };
 
         // - 目前還未有任何資訊: 第一次對話
-        if (Object.values(requestData.incidentJson["車禍發生事故"]).filter(value => value !== "").length == 0) {
+        // Object.values(requestData.incidentJson["車禍發生事故"]).filter(value => value !== "").length == 0 && 
+        if (requestData._id == "") {
 
             // + 初始模組
             const { firstPromptModule } = require("./data/prompt")

@@ -231,6 +231,7 @@ export default function Chat() {
     const enterChatValue = () => {
 
         try {
+
             setUserDescription("");
 
             // @ 取得台灣的即時時間
