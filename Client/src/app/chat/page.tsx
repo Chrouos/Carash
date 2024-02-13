@@ -43,6 +43,20 @@ export default function Chat() {
     // ---------------------------------------- Variables ----------------------------------------
     const router = useRouter()
 
+    // : Loading
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadingStates, setLoadingStates] = useState({
+        API_retrievalContent: false,
+        API_fetchAccidentDetailsTitle: false,
+        API_fetchAccidentDetailsContent: false,
+        API_refactorEvent: false
+    }); // = 儲存各個API的loading狀態
+    useEffect(() => {  
+        // @ 當任何一個API的loading狀態改變時，更新isLoading
+        const anyLoading = Object.values(loadingStates).some(state => state);
+        setIsLoading(anyLoading);
+    }, [loadingStates]);
+
     // : 畫面
     const [colSizeDict, setColSizeListDict] = useState({rightPanel_divSize: 0})
     
@@ -61,10 +75,11 @@ export default function Chat() {
     const [currentChooseType, setCurrentChooseType] = useState<string>(""); // = 目前選擇的 AccidentDetails 類別
     
     // ---------------------------------------- API ----------------------------------------
-    
+
     // ----- 輸入對話內容
     const API_retrievalContent = async (new_historyChatContent: ChatContentType[], isNewConversation: boolean) => {
 
+        
         const request = {
             userDescription: userDescription,
             verificationCode: localStorage.getItem("verificationCode")|| "",
@@ -77,7 +92,7 @@ export default function Chat() {
         }
 
         try {
-
+            setLoadingStates(prev => ({ ...prev, API_retrievalContent: true }));
             const response = await axios.post('/accidentDetails/retrievalContent', request, { headers: authHeader() });
 
             // @ 增加對話
@@ -86,7 +101,8 @@ export default function Chat() {
                 incidentJson: response.data.incidentJson,
                 historyChatContent: response.data.historyChatContent,
                 title: response.data.title,
-                _id: response.data._id
+                _id: response.data._id,
+                refactorHappened: response.data.refactorHappened
             }));   
 
             // @ 刷新 titleSlider
@@ -96,7 +112,9 @@ export default function Chat() {
             setCCGCurrentQuestion(response.data.ccgCurrentQuestion)
 
         } catch (error) {
-            console.error('[enterChatValue] Error: ', error);
+            console.error('[API_retrievalContent] Error: ', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, API_retrievalContent: false }));
         }
     }
 
@@ -108,6 +126,9 @@ export default function Chat() {
         }
 
         try {
+
+            setLoadingStates(prev => ({ ...prev, API_fetchAccidentDetailsTitle: true }));
+
             const response = await axios.post('/accidentDetails/getAccidentDetailsTitle', request, { headers: authHeader() });
             const newTitleSider = response.data.titles.map((item: {_id: string, title: string}, index: number) => {               
                 return {
@@ -119,34 +140,76 @@ export default function Chat() {
             setTitlesSider(newTitleSider);
 
         } catch (error) {
-            console.error('[enterChatValue] Error: ', error);
+            console.error('[API_fetchAccidentDetailsTitle] Error: ', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, API_fetchAccidentDetailsTitle: false }));
         }
     }
 
     // ----- 從 Sider 選擇標題後得到內容
     const API_fetchAccidentDetailsContent = async (_id: string) => {
         
-        const request = { _id }
+        const request = { 
+            _id: _id || currentAccidentDetails._id,
+        }
 
         try {
+
+            setLoadingStates(prev => ({ ...prev, API_fetchAccidentDetailsContent: true }));
+
             const response = await axios.post('/accidentDetails/getContentAndJson', request, { headers: authHeader() });
             setCurrentAccidentDetails(prevState => ({
                 // ...prevState,
                 incidentJson: response.data.incidentJson,
                 historyChatContent: response.data.historyChatContent,
                 title: response.data.title,
-                _id: response.data._id
+                _id: response.data._id,
+                refactorHappened: response.data.refactorHappened
             }));   
             setCCGCurrentQuestion(response.data.historyChatContent[response.data.historyChatContent.length - 1].value)
 
         } catch (error) {
             console.error('[enterChatValue] Error: ', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, API_fetchAccidentDetailsContent: false }));
+        }
+    }
+
+    // ----- 從 Json 中還原事實經過
+    const API_refactorEvent = async () => {
+        const request = { 
+            _id: currentAccidentDetails._id,
+            incidentJson: currentAccidentDetails.incidentJson
+        }
+
+        try {
+            setLoadingStates(prev => ({ ...prev, API_refactorEvent: true }));
+
+            const response = await axios.post('/accidentDetails/RefactorEvent', request, { headers: authHeader() });
+            setCurrentAccidentDetails(prevState => ({
+                ...prevState,
+                refactorHappened: response.data.refactorHappened
+            }));   
+
+        } catch (error) {
+            console.error('[API_RefactorEvent] Error: ', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, API_refactorEvent: false }));
         }
     }
 
     // -v- 點選 Sider 事件
-    const chooseDiffAccidentDetails = (_id: string) => {
+    const chooseAccidentSider = (_id: string) => {
         API_fetchAccidentDetailsContent(_id);
+    }
+
+    // -v- 還原事發經過
+    const refactorEvent = () => {
+        setCurrentAccidentDetails(prevState => ({
+            ...prevState,
+            refactorHappened: "重構還原事發經過中..."
+        }));  
+        API_refactorEvent();
     }
 
     // -v- 開啟新的對話
@@ -155,6 +218,10 @@ export default function Chat() {
         setCurrentAccidentDetails(accidentDetails);
         setUserDescription("");
         setCCGCurrentQuestion("");
+        setCurrentAccidentDetails(prevState => ({
+            ...prevState,
+            refactorHappened: ""
+        }));
     }
 
     // -v- 加入聊天內容
@@ -186,6 +253,8 @@ export default function Chat() {
                 ...prevState,
                 historyChatContent: [...prevState.historyChatContent, userNewChat, chatBotLoading]
             }));     
+
+            refactorEvent();
         }
         catch (error) { }
     }
@@ -204,6 +273,18 @@ export default function Chat() {
         })
 
         return renderList;
+    };
+
+    const RenderDisplayRefactorEvent = () => {
+        if (currentAccidentDetails?.refactorHappened) {
+            return currentAccidentDetails.refactorHappened.split('\n').map((line, index) => (
+                <React.Fragment key={index}>
+                    {line}
+                    <br />
+                </React.Fragment>
+            ));
+        }
+        return null;
     };
 
     // -v- 開關事實生成框
@@ -236,6 +317,8 @@ export default function Chat() {
         }
     };
 
+
+
     // => 讓對話內容如果更動保持在最下面
     useEffect(() => {
         if (historyChatContentRef.current) {
@@ -267,7 +350,7 @@ export default function Chat() {
                 style={{background: "transparent"}}
                 mode="inline"
                 items={titlesSider}
-                onClick={(e) => { chooseDiffAccidentDetails(e.key) }}
+                onClick={(e) => { chooseAccidentSider(e.key) }}
             />
 
             {/* 登出 */}
@@ -373,6 +456,20 @@ export default function Chat() {
                                 <Divider/>
 
 
+                                <div className='p-5 overflow-y-scroll no-scrollbar'>
+                                    <RenderDisplayRefactorEvent />
+                                    <br/><br/>
+                                    <div className='flex justify-center gap-6 w-full p-2 absolute bottom-0 ' style={{backdropFilter: "blur(2px)"}}>
+                                        <Button 
+                                            onPress={refactorEvent}
+                                            isLoading={ loadingStates?.API_refactorEvent } >
+                                            重新還原事實 
+                                        </Button>
+                                        <Button >
+                                            自動對話 
+                                        </Button>
+                                    </div>
+                                </div>
                             </Card>
                         </Tab>
 

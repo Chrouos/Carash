@@ -59,7 +59,8 @@ export const accidentDetails: AccidentDetailsType = {
             "工作損失": "",
             "精神賠償": ""
         }
-    }
+    },
+    refactorHappened: ""
 }
 
 
@@ -78,6 +79,7 @@ interface AccidentDetailsType {
             [key: string]: string;
         };
     };
+    refactorHappened: string
 }
 
 export type { AccidentDetailsType, ChatContentType };

@@ -64,7 +64,8 @@ exports.retrievalContent = async (req, res) => {
             historyChatContent: requestData.historyChatContent || [],
             verificationCode: requestData.verificationCode || "",
             incidentJson: requestData.incidentJson || {},
-            ccgCurrentQuestion: requestData.ccgCurrentQuestion || ""
+            ccgCurrentQuestion: requestData.ccgCurrentQuestion || "",
+            refactorHappened: requestData.refactorHappened || ""
         };
 
         // - 目前還未有任何資訊: 第一次對話
@@ -229,3 +230,58 @@ exports.getContentAndJson = async (req, res) => {
 
 }
 
+// ----- 重構事件
+exports.RefactorEvent = async (req, res) => {
+    try {
+
+        const requestData = req.body;
+        var responseData = {}
+        
+        // - Prompt
+        const { RefactorEventPrompt } = require("./data/prompt")
+
+        // - OpenAI
+        const configCrypto = new ConfigCrypto();
+        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
+        const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
+    
+        // - 呼叫資料庫 MongoDB
+        const mongoDB = new MongoDB_Tools();
+
+        // + 還原事實模組
+        const happenedMessage = [
+            { "role": "system", "content": RefactorEventPrompt },
+            { "role": "user", "content": JSON.stringify(requestData.incidentJson) },
+        ]
+        const gptResponse = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: happenedMessage,
+            temperature: 0.1,
+            max_tokens: 1024,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+        });
+
+        responseData.refactorHappened = gptResponse.data.choices[0].message.content;
+        responseData.message = "重構事發經過成功"
+
+        // - 存到資料庫
+        await mongoDB.update(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(requestData._id) },
+            updateOperation = {
+                $set: {
+                    refactorHappened: responseData.happened
+                }
+            }
+        );
+
+        res.status(200).send(responseData);
+
+    }
+    catch (error) {
+        console.error("[getHappened] Error :", error.message || error);
+        res.status(500).send(`[getHappened] Error : ${error.message || error}`);
+    }
+}
