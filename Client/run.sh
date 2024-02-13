@@ -1,6 +1,3 @@
-# 先處理 Nextjs
-npm run build
-
 # 建立 Docker 映像
 docker build -t carash-client . # 建立 Image
 
