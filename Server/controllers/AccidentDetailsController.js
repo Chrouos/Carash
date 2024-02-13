@@ -15,7 +15,8 @@ exports.retrievalContent = async (req, res) => {
         title,
         _id,
         historyChatContent,
-        verificationCode
+        verificationCode,
+        refactorHappened
     */
 
     try {
@@ -160,7 +161,8 @@ exports.retrievalContent = async (req, res) => {
                     historyChatContent: { $each: newContent }
                 },
                 $set: {
-                    incidentJson: responseData.incidentJson
+                    incidentJson: responseData.incidentJson,
+                    refactorHappened: responseData.refactorHappened
                 }
             }
         );
@@ -219,7 +221,7 @@ exports.getContentAndJson = async (req, res) => {
 }
 
 // ----- 重構事件
-exports.RefactorEvent = async (req, res) => {
+exports.refactorEvent = async (req, res) => {
     try {
 
         const requestData = req.body;
@@ -271,4 +273,55 @@ exports.RefactorEvent = async (req, res) => {
     catch (error) {
         res.status(500).send(`[RefactorEvent] Error: ${error.message || error}`);
     }
+}
+
+// ----- 當事人Agent (自動答覆)
+exports.litigantAgent = async (req, res) => {
+
+    /*
+        cleanJudgementData,
+        question
+    */
+
+    try {
+
+        // - 獲得 OpenAI API
+        const configCrypto = new ConfigCrypto();
+        const OPENAI_API_KEY = configCrypto.config.GPT_KEY; // Get OpenAI API key
+        const openai = new OpenAIApi(new Configuration({ apiKey: OPENAI_API_KEY })); // openAI API
+
+        // - 回傳資訊
+        var responseData = req.body;
+
+        // - request data
+        const requestData = req.body;
+
+        // + 當事人模組
+        const { litigantAgentModule } = require("./data/prompt")
+        var agentPrompt = litigantAgentModule(requestData);
+
+        const message = [
+            { "role": "system", "content": agentPrompt }
+        ]
+
+        const gptResponse = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo-1106",
+            messages: message,
+            temperature: 0.5,
+            max_tokens: 1024,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+        });
+
+        const responseContent = gptResponse.data.choices[0].message.content;
+        responseData.agentDescription = responseContent
+
+        res.status(200).send(responseData);
+    
+    }
+    catch (error) {
+        res.status(500).send(`[litigantAgent] Error: ${error.message || error}`);
+    }
+
 }

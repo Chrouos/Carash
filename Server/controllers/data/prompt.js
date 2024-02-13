@@ -32,3 +32,10 @@ exports.tidyPromptModule = (requestData) => {
     `\n[Json]:`;
 }
 
+// - 當事人模組
+exports.litigantAgentModule = (requestData) => {
+    return `你現在是一位[車禍事故]的當事人。你的任務目標是依照[車禍事故]，使用簡答的方式回答警察的問題。若警察的問題在[車禍事故]未提及此答案，你則回答'不知道'。` + 
+    `\n[車禍事故]:\n${requestData.refactorHappened}\n` +
+    `\n[警察的問題]:\n${requestData.question}\n` +
+    `你的問答:\n`;
+}

@@ -15,7 +15,7 @@ import {
 const { Sider, Content } = Layout;
 
 // - Antd Icon
-import { ArrowRightOutlined, FileOutlined, PoweroffOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, FileOutlined, PoweroffOutlined, CaretRightOutlined, PauseOutlined } from '@ant-design/icons';
 
 // - NextUI
 import {
@@ -55,6 +55,7 @@ export default function Chat() {
         // @ 當任何一個API的loading狀態改變時，更新isLoading
         const anyLoading = Object.values(loadingStates).some(state => state);
         setIsLoading(anyLoading);
+
     }, [loadingStates]);
 
     // : 畫面
@@ -73,22 +74,25 @@ export default function Chat() {
     // : 生成視窗框
     const [rightPanelSelect, setRightPanelSelect] = useState<string>("事件細節"); // = 目前選擇的 rightPanel
     const [currentChooseType, setCurrentChooseType] = useState<string>(""); // = 目前選擇的 AccidentDetails 類別
+
+    // : 自動對話
+    const [isAutoConversation, setIsAutoConversation] = useState<boolean>(false); // = 是否自動對話中
     
     // ---------------------------------------- API ----------------------------------------
 
     // ----- 輸入對話內容
-    const API_retrievalContent = async (new_historyChatContent: ChatContentType[], isNewConversation: boolean) => {
+    const API_retrievalContent = async (new_historyChatContent: ChatContentType[], isNewConversation: boolean, newDescription: string) => {
 
-        
         const request = {
-            userDescription: userDescription,
+            userDescription: newDescription,
             verificationCode: localStorage.getItem("verificationCode")|| "",
             ccgCurrentQuestion: ccgCurrentQuestion,
             incidentJson: currentAccidentDetails.incidentJson,
             title: currentAccidentDetails.title,
             _id: currentAccidentDetails._id,
             historyChatContent: new_historyChatContent,
-            currentChooseType: currentChooseType
+            currentChooseType: currentChooseType,
+            refactorHappened: currentAccidentDetails.refactorHappened
         }
 
         try {
@@ -110,9 +114,6 @@ export default function Chat() {
             
             // @ 更新當前問題   
             setCCGCurrentQuestion(response.data.ccgCurrentQuestion)
-
-            // @ 重構還原事件
-            refactorEvent(response.data._id)
 
         } catch (error) {
             console.error('[API_retrievalContent] Error: ', error);
@@ -188,22 +189,37 @@ export default function Chat() {
         try {
             setLoadingStates(prev => ({ ...prev, API_refactorEvent: true }));
 
-            const response = await axios.post('/accidentDetails/RefactorEvent', request, { headers: authHeader() });
+            const response = await axios.post('/accidentDetails/refactorEvent', request, { headers: authHeader() });
             setCurrentAccidentDetails(prevState => ({
                 ...prevState,
                 refactorHappened: response.data.refactorHappened
             }));   
 
         } catch (error) {
-            console.error('[API_RefactorEvent] Error: ', error);
+            console.error('[API_refactorEvent] Error: ', error);
         } finally {
             setLoadingStates(prev => ({ ...prev, API_refactorEvent: false }));
         }
     }
 
-    // -v- 點選 Sider 事件
-    const chooseAccidentSider = (_id: string) => {
-        API_fetchAccidentDetailsContent(_id);
+    // ----- 當事人 Agent
+    const API_litigantAgent = async () => {
+        const request = { 
+            refactorHappened: currentAccidentDetails.refactorHappened,
+            question: ccgCurrentQuestion
+        }
+
+        try {
+            setLoadingStates(prev => ({ ...prev, API_litigantAgent: true }));
+
+            const response = await axios.post('/accidentDetails/litigantAgent', request, { headers: authHeader() });
+            return response.data;
+
+        } catch (error) {
+            console.error('[API_litigantAgent] Error: ', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, API_litigantAgent: false }));
+        }
     }
 
     // -v- 還原事發經過
@@ -213,6 +229,12 @@ export default function Chat() {
             refactorHappened: "重構還原事發經過中..."
         }));  
         API_refactorEvent(_id);
+    }
+
+    // -v- 點選 Sider 事件
+    const chooseAccidentSider = (_id: string) => {
+        API_fetchAccidentDetailsContent(_id);
+        createNewConversation();
     }
 
     // -v- 開啟新的對話
@@ -228,10 +250,13 @@ export default function Chat() {
     }
 
     // -v- 加入聊天內容
-    const enterChatValue = () => {
+    const enterChatValue = async(_userDescription: string = "") => {
 
         try {
 
+            if (loadingStates.API_retrievalContent) {return;}
+
+            const newDescription = userDescription || _userDescription
             setUserDescription("");
 
             // @ 取得台灣的即時時間
@@ -240,7 +265,7 @@ export default function Chat() {
 
             // @ 使用者的新對話內容
             const userNewChat: ChatContentType = {
-                value: userDescription,
+                value: newDescription,
                 character: "questioner",
                 createTime: createTime
             };
@@ -251,12 +276,15 @@ export default function Chat() {
                 createTime: createTime
             }
 
-            // @ 更新畫面 & API 呼叫
-            API_retrievalContent([...currentAccidentDetails.historyChatContent], currentAccidentDetails.historyChatContent.length == 0);;
+            // @ 改變目前顯示畫面
             setCurrentAccidentDetails(prevState => ({
                 ...prevState,
                 historyChatContent: [...prevState.historyChatContent, userNewChat, chatBotLoading]
-            }));     
+            })); 
+
+            // @ 更新畫面 & API 呼叫
+            await API_retrievalContent(  [...currentAccidentDetails.historyChatContent], currentAccidentDetails.historyChatContent.length == 0, newDescription );
+            
         }
         catch (error) { }
     }
@@ -277,6 +305,7 @@ export default function Chat() {
         return renderList;
     };
 
+    // -v- 還原事實顯示框
     const RenderDisplayRefactorEvent = () => {
         if (currentAccidentDetails?.refactorHappened) {
             return currentAccidentDetails.refactorHappened.split('\n').map((line, index) => (
@@ -305,6 +334,20 @@ export default function Chat() {
         router.push('/');
     }
 
+    // -v- 自動對話
+    const autoConversation = async () => {
+        // 切換自動對話狀態
+        setIsAutoConversation(true);
+
+        const responseData = await API_litigantAgent();
+        await enterChatValue(responseData.agentDescription)
+
+        setTimeout(() => {
+            setIsAutoConversation(false)    
+        }, 1500);
+        
+    }
+
     // => 初始化讀取
     useEffect(() => {
         API_fetchAccidentDetailsTitle(); // = 獲得標題
@@ -318,8 +361,6 @@ export default function Chat() {
             enterChatValue();
         }
     };
-
-
 
     // => 讓對話內容如果更動保持在最下面
     useEffect(() => {
@@ -375,13 +416,13 @@ export default function Chat() {
                 <div className='grid content-between shrink w-full h-full'>
 
                     {/* 對話內容 */}
-                    <div className="pt-8 pl-20 pr-20 " style={{height: "80vh"}} id="div-chat-view-container">
-                        <Card style={{height: "95%"}}>
+                    <div className="pt-8 pl-20 pr-20 " style={{height: "88vh"}} id="div-chat-view-container">
+                        <Card style={{height: "100%"}}>
 
                             {/* 對話初始提示框 */}
                             {currentAccidentDetails.historyChatContent.length == 0 && 
                                 <div className="pt-8 pl-20 pr-20" id="div-chat-init-hint-container">      
-                                    <Card>
+                                    <Card className='h-full'>
                                         <CardHeader className="flex gap-3">
                                             <Image 
                                                 alt="ccg-icon" 
@@ -414,19 +455,21 @@ export default function Chat() {
                     </div>
 
                     {/* 輸入 */}
-                    <div className="flex gap-4 p-7" id="div-chat-input-container">
+                    <div className="flex gap-4 p-7" id="div-chat-input-container" style={{height: "12vh"}}>
                         <Textarea 
-                            className='h-full bg-white'
+                            className='h-full'
                             label="想輸入的內容...."
                             variant={"faded"}
                             value={userDescription}
                             onValueChange={setUserDescription}
                             placeholder='Shift + Enter 可直接傳送'
-                            onKeyDown={handleKeyDown} />
+                            onKeyDown={handleKeyDown}
+                            isDisabled={isAutoConversation} />
                         <Button 
                             className='h-full w-12 bg-white' variant="faded" 
-                            onPress={enterChatValue}
-                            isIconOnly > 
+                            onPress={(e) => {enterChatValue()}}
+                            isIconOnly
+                            isDisabled={loadingStates.API_retrievalContent || isAutoConversation}> 
                             <ArrowRightOutlined /> 
                         </Button>
                     </div>
@@ -450,34 +493,51 @@ export default function Chat() {
                     <Tabs aria-label='Options' selectedKey={rightPanelSelect} onSelectionChange={(key) => setRightPanelSelect(String(key))} >
                         
                         <Tab key="事實生成" title="事實生成">
-                            <Card style={{height: "83vh"}}>
+                            <Card style={{height: "88vh"}}>
                                 <CardHeader className="flex gap-3">
                                     <p className="text-md">事實生成</p>
                                     <p className="text-small text-default-500">經過模組還原的事實</p>
                                 </CardHeader>
                                 <Divider/>
-
-
-                                <div className='p-5 overflow-y-scroll no-scrollbar'>
-                                    <RenderDisplayRefactorEvent />
-                                    <br/><br/>
-                                    <div className='flex justify-center gap-6 w-full p-2 absolute bottom-0 ' style={{backdropFilter: "blur(2px)"}}>
-                                        <Button 
-                                            onPress={(e) => {refactorEvent(currentAccidentDetails._id)}}
-                                            isLoading={ loadingStates?.API_refactorEvent }
-                                            disabled={currentAccidentDetails._id == ""} >
-                                            重新還原事實 
-                                        </Button>
-                                        <Button >
-                                            自動對話 
-                                        </Button>
-                                    </div>
+                                
+                                <div className='p-5 h-full'>
+                                    <Textarea
+                                        label="Description"
+                                        variant="bordered"
+                                        value={currentAccidentDetails.refactorHappened}
+                                        onValueChange={(e) => {setCurrentAccidentDetails(prevState => ({...prevState, refactorHappened: e}))}}
+                                        placeholder="Enter your description"
+                                        classNames={{
+                                            input: "resize-y min-h-[65vh]",
+                                        }} />
                                 </div>
+
+                                <div className='grid grid-cols-2 gap-4 pr-4 pl-4 place-content-center h-28'>
+                                    <Button 
+                                        className='bg-transparent border-2 border-slate-600 text-xl '
+                                        onPress={autoConversation}
+                                        isLoading={isAutoConversation} > 
+                                        自動回話
+                                        {/* {!isAutoConversation ? <CaretRightOutlined /> : <PauseOutlined />} */}
+                                        {/* <CaretRightOutlined /> */}
+                                        
+                                    </Button>
+
+                                    <Button 
+                                        className='text-xl'
+                                        onPress={(e) => {refactorEvent(currentAccidentDetails._id)}}
+                                        isLoading={ loadingStates?.API_refactorEvent }
+                                        disabled={currentAccidentDetails._id == ""} >
+                                        還原事實 
+                                    </Button>
+                                </div>
+
+
                             </Card>
                         </Tab>
 
                         <Tab key="事件細節" title="事件細節">
-                            <Card style={{height: "83vh"}}>
+                            <Card style={{height: "88vh"}}>
 
                                 <CardHeader className="flex gap-3">
                                     <p className="text-md">事件細節</p>
