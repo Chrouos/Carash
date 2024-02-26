@@ -2,7 +2,7 @@ version: '3.8'
 services:
   carash-server:
     build: 
-      context: ./server
+      context: ./Server
       dockerfile: Dockerfile
     ports:
       - "8280:8280"
@@ -10,8 +10,21 @@ services:
 
   carash-client:
     build: 
-      context: ./client
+      context: ./Client
       dockerfile: Dockerfile
     ports:
       - "8230:8230"
     container_name: carash-client
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"   # 將 Nginx 的 80 端口映射到主機的 8080 端口
+      - "8443:443"  # HTTPS
+    volumes:
+      - ./nginx-default.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - carash-server
+      - carash-client
+    container_name: nginx-proxy
