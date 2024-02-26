@@ -68,7 +68,6 @@ class MongoDB_Tools {
             let cursor = collection.find(query).project(projection).sort(sort);
             
             // 如果 limit 有有效值，則應用它
-            console.log(limit)
             if (limit !== null && Number.isInteger(limit) && limit > 0) {
                 cursor = cursor.limit(limit);
             }

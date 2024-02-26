@@ -61,7 +61,7 @@ exports.retrievalContent = async (req, res) => {
         // - 回傳資訊
         var responseData = {
             _id: requestData._id || "",
-            title: requestData.title || createTime + " - " + requestData.userDescription, 
+            title: requestData.title || createTime, // + " - " + requestData.userDescription, 
             historyChatContent: requestData.historyChatContent || [],
             verificationCode: requestData.verificationCode || "",
             incidentJson: requestData.incidentJson || {},

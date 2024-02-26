@@ -23,12 +23,15 @@ import {
     Divider, 
     Input, Button,
     Textarea, 
-    Tabs, Tab
+    Tabs, Tab,
+    Listbox, ListboxItem
 } from "@nextui-org/react";
 
 // - 自己寫的元件
 import SpeechBubbles from './(components)/SpeechBubbles';
 import AccidentDetailJson from './(components)/AccidentDetailJson';
+import MenuSider from './(components)/MenuSider';
+
 import "../../styles/loading.css"
 
 import { getTaiwanTime, toHumanReadable } from 'utils/TimeTw';
@@ -234,7 +237,7 @@ export default function Chat() {
     // -v- 點選 Sider 事件
     const chooseAccidentSider = (_id: string) => {
         API_fetchAccidentDetailsContent(_id);
-        createNewConversation();
+        // createNewConversation();
     }
 
     // -v- 開啟新的對話
@@ -318,6 +321,8 @@ export default function Chat() {
         return null;
     };
 
+    
+
     // -v- 開關事實生成框
     const changeGenerateFact_divSize = () => {
         setColSizeListDict(prevState => ({
@@ -373,7 +378,7 @@ export default function Chat() {
     return (<>  <Layout>
 
         {/* 左邊 Sider */}
-        <Sider width="5%" className='' style={{ background: "#9c9c9c37" }} collapsed={true}>
+        <Sider width="5%" className='max-h-screen ' style={{ background: "#9c9c9c37" }} collapsed={true}>
 
 
             {/* 全新對話 */}
@@ -389,12 +394,10 @@ export default function Chat() {
             <Divider className='mt-2 mb-2' />
 
             {/* 選擇對話紀錄 */}
-            <Menu
-                style={{background: "transparent"}}
-                mode="inline"
-                items={titlesSider}
-                onClick={(e) => { chooseAccidentSider(e.key) }}
-            />
+            <MenuSider 
+                titlesSider={titlesSider} 
+                chooseAccidentSider={chooseAccidentSider}
+                currentKey={currentAccidentDetails._id} />
 
             {/* 登出 */}
             <div className='justify-center flex'>
