@@ -40,7 +40,7 @@ export default function Login() {
         };
 
         try {
-            const response = await axios.post('/users/loginAccount', request, { headers: authHeader() });
+            const response = await axios.post('/api/users/loginAccount', request, { headers: authHeader() });
 
             if (response.data.isSuccesses) {
                 messageApi.success(response.data.message);

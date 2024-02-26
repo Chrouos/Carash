@@ -97,7 +97,7 @@ export default function Chat() {
 
         try {
             setLoadingStates(prev => ({ ...prev, API_retrievalContent: true }));
-            const response = await axios.post('/accidentDetails/retrievalContent', request, { headers: authHeader() });
+            const response = await axios.post('/api/accidentDetails/retrievalContent', request, { headers: authHeader() });
 
             // @ 增加對話
             setCurrentAccidentDetails(prevState => ({
@@ -133,7 +133,7 @@ export default function Chat() {
 
             setLoadingStates(prev => ({ ...prev, API_fetchAccidentDetailsTitle: true }));
 
-            const response = await axios.post('/accidentDetails/getAccidentDetailsTitle', request, { headers: authHeader() });
+            const response = await axios.post('/api/accidentDetails/getAccidentDetailsTitle', request, { headers: authHeader() });
             const newTitleSider = response.data.titles.map((item: {_id: string, title: string}, index: number) => {               
                 return {
                     key: item._id,
@@ -161,7 +161,7 @@ export default function Chat() {
 
             setLoadingStates(prev => ({ ...prev, API_fetchAccidentDetailsContent: true }));
 
-            const response = await axios.post('/accidentDetails/getContentAndJson', request, { headers: authHeader() });
+            const response = await axios.post('/api/accidentDetails/getContentAndJson', request, { headers: authHeader() });
             setCurrentAccidentDetails(prevState => ({
                 // ...prevState,
                 incidentJson: response.data.incidentJson,
@@ -189,7 +189,7 @@ export default function Chat() {
         try {
             setLoadingStates(prev => ({ ...prev, API_refactorEvent: true }));
 
-            const response = await axios.post('/accidentDetails/refactorEvent', request, { headers: authHeader() });
+            const response = await axios.post('/api/accidentDetails/refactorEvent', request, { headers: authHeader() });
             setCurrentAccidentDetails(prevState => ({
                 ...prevState,
                 refactorHappened: response.data.refactorHappened
@@ -212,7 +212,7 @@ export default function Chat() {
         try {
             setLoadingStates(prev => ({ ...prev, API_litigantAgent: true }));
 
-            const response = await axios.post('/accidentDetails/litigantAgent', request, { headers: authHeader() });
+            const response = await axios.post('/api/accidentDetails/litigantAgent', request, { headers: authHeader() });
             return response.data;
 
         } catch (error) {
