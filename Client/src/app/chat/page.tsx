@@ -411,12 +411,12 @@ export default function Chat() {
         </Sider>
         
         {/* 右邊 Content */}
-        <Content className='flex flex-wrap min-h-screen'>
+        <Content className='flex flex-wrap h-screen'>
             
             {/* 對話框 */}
             <Col xl={24-colSizeDict.rightPanel_divSize} lg={24-colSizeDict.rightPanel_divSize} md={24} sm={24} xs={24} >
                 {/* 對話框 */}
-                <div className='grid content-between shrink w-full h-full'>
+                <div className='grid shrink w-full h-full'>
 
                     {/* 對話內容 */}
                     <div className="pt-8 pl-20 pr-20 " style={{height: "88vh"}} id="div-chat-view-container">
@@ -492,7 +492,7 @@ export default function Chat() {
             {/* 事實生成框 rightPanel*/}
             <Col xl={colSizeDict.rightPanel_divSize} lg={colSizeDict.rightPanel_divSize} md={24} sm={24} xs={24} >
                 <Divider />
-                <div className='w-full h-full p-10 overflow-y-scroll no-scrollbar'>
+                <div className='w-full h-screen p-10 overflow-y-scroll no-scrollbar'>
                     <Tabs aria-label='Options' selectedKey={rightPanelSelect} onSelectionChange={(key) => setRightPanelSelect(String(key))} >
                         
                         <Tab key="事實生成" title="事實生成">

@@ -26,13 +26,16 @@ const MenuSider: React.FC<MenuSiderProps> = ({ titlesSider, chooseAccidentSider,
         
         titlesSider.forEach((item, index) => {
             renderList.push(
-                    <ListboxItem 
-                        key={item.key} textValue={item.label} style={{textAlign: "center", height: "55px"}} 
-                        className={currentKey == item.key ? "text-danger" : ""}>
-                        <Tooltip content={item.label} placement="right-start">
-                            <div style={{fontSize: "30px"}}>{item.icon}</div>
-                        </Tooltip>
-                    </ListboxItem>
+                <ListboxItem 
+                    key={item.key} 
+                    textValue={item.label} 
+                    style={{textAlign: "center", height: "55px"}} 
+                    className={currentKey == item.key ? "text-danger" : ""}
+                    color={currentKey == item.key ? "danger" : "default"}>
+                    <Tooltip content={item.label} placement="right-start" closeDelay={100} style={{width: "20vw"}}>
+                        <div style={{fontSize: "30px"}}>{item.icon}</div>
+                    </Tooltip>
+                </ListboxItem>
             );
         });
 
