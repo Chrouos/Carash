@@ -33,7 +33,7 @@ const MenuSider: React.FC<MenuSiderProps> = ({ titlesSider, chooseAccidentSider,
                     className={currentKey == item.key ? "text-danger" : ""}
                     color={currentKey == item.key ? "danger" : "default"}>
                     <Tooltip content={item.label} placement="right-start" closeDelay={100} style={{width: "20vw"}}>
-                        <div style={{fontSize: "30px"}}>{item.icon}</div>
+                        <div style={{fontSize: "30px"}} className="flex justify-center">{item.icon}</div>
                     </Tooltip>
                 </ListboxItem>
             );

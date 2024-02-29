@@ -62,12 +62,11 @@ const AccidentDetailJson: React.FC<AccidentDetailJsonProps> = ({ accidentDetails
     return (<>
 
         {/* 選擇類型大塊 */}
-        <div className="grid grid-cols-2 gap-4 p-5 w-full">
+        {/* <div className="grid grid-cols-2 gap-4 p-5 w-full">
             <RenderDisplayAccidentDetailsType />
         </div>  
 
-        <Divider /> <br />
-        
+        <Divider /> <br /> */}
 
         {/* 列表 */}
         <div className="grid p-5 pt-1 w-full gap-y-4 overflow-y-scroll no-scrollbar">

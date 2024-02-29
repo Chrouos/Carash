@@ -16,7 +16,6 @@ const { Sider, Content } = Layout;
 
 // - Antd Icon
 import { ArrowRightOutlined, FileOutlined, PoweroffOutlined, CaretRightOutlined, PauseOutlined } from '@ant-design/icons';
-
 // - NextUI
 import {
     Card, CardHeader, CardBody, CardFooter, 
@@ -40,6 +39,7 @@ import authHeader from '../../Provider/store/AuthHeader';
 
 // - Date Template
 import { accidentDetails, AccidentDetailsType, ChatContentType} from 'data/accidentDetails';
+import {ReturnIcon, IconSelector} from 'components/ReturnIcon';
 
 export default function Chat() {
 
@@ -141,7 +141,7 @@ export default function Chat() {
                 return {
                     key: item._id,
                     label: item.title,
-                    icon: <FileOutlined />
+                    icon: <ReturnIcon />
                 }
             })
             setTitlesSider(newTitleSider);
@@ -404,7 +404,7 @@ export default function Chat() {
                 <Button 
                     className='absolute bottom-2 bg-transparent rounded-full border-2 border-slate-600 text-xl min-w-10'
                     onPress={logOut}> 
-                    <PoweroffOutlined />
+                    <ReturnIcon IconName={"PowerOff"} />
                 </Button>
             </div>
 
@@ -473,7 +473,7 @@ export default function Chat() {
                             onPress={(e) => {enterChatValue()}}
                             isIconOnly
                             isDisabled={loadingStates.API_retrievalContent || isAutoConversation}> 
-                            <ArrowRightOutlined /> 
+                            <ReturnIcon IconName={"ArrowRight"} /> 
                         </Button>
                     </div>
                 </div>
@@ -554,6 +554,25 @@ export default function Chat() {
                                     setCurrentChooseType={setCurrentChooseType} />
                             </Card>
                         </Tab>
+
+                        
+                        <Tab key="設定" title="設定">
+                            <Card style={{height: "88vh"}}>
+
+                                <CardHeader className="flex gap-3">
+                                    <p className="text-md">聊天室設定</p>
+                                    <p className="text-small text-default-500">對話內容設定</p>
+                                </CardHeader>
+                                <Divider/>
+                                
+                                <div className='p-5'>
+                                    <Input variant='underlined' value={currentAccidentDetails.title} label={"Title"} />
+                                    <IconSelector  />
+                                </div>
+                                
+                            </Card>
+                        </Tab>
+
 
                     </Tabs>
                 </div>
