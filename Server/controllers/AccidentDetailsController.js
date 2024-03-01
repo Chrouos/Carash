@@ -366,7 +366,39 @@ exports.updateViewerData = async (req, res) => {
         res.status(200).send(responseData);
 
     } catch (error) {
-        console.error("[templateJSON] Error fetching from OpenAI:", error.message || error);
-        res.status(500).send(`[templateJSON] Error fetching from OpenAI: ${error.message || error}`);
+        console.error("[updateViewerData] Error fetching from OpenAI:", error.message || error);
+        res.status(500).send(`[updateViewerData] Error fetching from OpenAI: ${error.message || error}`);
+    }
+}
+
+// ----- 刪除資料
+exports.deleteAccidentDetails = async (req, res) => {
+    /*
+        _id,
+    */
+
+    try {
+
+        // - 呼叫資料庫 MongoDB
+        const mongoDB = new MongoDB_Tools();
+
+        // - 整理 Request, Response
+        const requestData = req.body;
+        var responseData = {
+            _id: requestData._id,
+            message: "刪除失敗"
+        }
+        
+        // - 刪除資料
+        await mongoDB.delete(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(responseData._id) },
+        );
+
+        responseData.message = "刪除成功"
+        res.status(200).send(responseData);
+    } catch (error) {
+        console.error("[deleteAccidentDetails] Error fetching from OpenAI:", error.message || error);
+        res.status(500).send(`[deleteAccidentDetails] Error fetching from OpenAI: ${error.message || error}`);
     }
 }

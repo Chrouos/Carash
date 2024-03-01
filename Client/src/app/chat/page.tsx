@@ -40,11 +40,13 @@ import authHeader from '../../Provider/store/AuthHeader';
 // - Date Template
 import { accidentDetails, AccidentDetailsType, ChatContentType} from 'data/accidentDetails';
 import {ReturnIcon, IconSelector} from 'components/ReturnIcon';
+import { useMessageContext } from '../../Provider/context/MessageContext'; 
 
 export default function Chat() {
 
     // ---------------------------------------- Variables ----------------------------------------
     const router = useRouter()
+    const { messageApi } = useMessageContext();
 
     // : Loading
     const [isLoading, setIsLoading] = useState(false);
@@ -268,9 +270,39 @@ export default function Chat() {
         }
     }
 
+    // ----- 刪除聊天記錄
+    const API_deleteAccidentDetails = async () => {
+        const request = { 
+            _id: currentAccidentDetails._id,
+        }
+
+        try {
+            const deleteTitleById = (id: string) => {
+                setTitlesSider(titlesSider.filter(item => item.key !== id));
+            };
+            setLoadingStates(prev => ({ ...prev, API_deleteAccidentDetails: true }));
+
+            const response = await axios.post('/api/accidentDetails/deleteAccidentDetails', request, { headers: authHeader() });
+
+            deleteTitleById(request._id);
+            createNewConversation();
+            messageApi.success(response.data.message);
+
+        } catch (error) {
+            console.error('[API_deleteAccidentDetails] Error: ', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, API_deleteAccidentDetails: false }));
+        }
+    }
+
     // -v- 更新資料
     const updateViewerData = () => {
         API_updateViewerData();
+    }
+
+    // -v- 刪除資料
+    const deleteAccidentDetails = () => {
+        API_deleteAccidentDetails();
     }
 
     // -v- 還原事發經過
@@ -636,7 +668,7 @@ export default function Chat() {
                                     </Button>
                                     <Button 
                                         className='text-xl'
-                                        onPress={(e) => {}}
+                                        onPress={(e) => {deleteAccidentDetails()}}
                                         isLoading={loadingStates?.API_refactorEvent}
                                         disabled={currentAccidentDetails._id == ""} 
                                         color={"danger"}
