@@ -7,6 +7,7 @@ app.post('/api/accidentDetails/getAccidentDetailsTitle', accidentDetailsControll
 app.post('/api/accidentDetails/getContentAndJson', accidentDetailsController.getContentAndJson);
 app.post('/api/accidentDetails/refactorEvent', accidentDetailsController.refactorEvent);
 app.post('/api/accidentDetails/litigantAgent', accidentDetailsController.litigantAgent);
+app.post('/api/accidentDetails/updateViewerData', accidentDetailsController.updateViewerData);
 
 module.exports = app;
 

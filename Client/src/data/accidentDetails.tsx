@@ -60,7 +60,8 @@ export const accidentDetails: AccidentDetailsType = {
             "精神賠償": ""
         }
     },
-    refactorHappened: ""
+    refactorHappened: "",
+    iconName: "File"
 }
 
 
@@ -79,7 +80,8 @@ interface AccidentDetailsType {
             [key: string]: string;
         };
     };
-    refactorHappened: string
+    refactorHappened: string,
+    iconName: string
 }
 
 export type { AccidentDetailsType, ChatContentType };

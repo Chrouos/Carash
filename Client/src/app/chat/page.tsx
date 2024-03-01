@@ -95,7 +95,9 @@ export default function Chat() {
             _id: currentAccidentDetails._id,
             historyChatContent: new_historyChatContent,
             currentChooseType: currentChooseType,
-            refactorHappened: currentAccidentDetails.refactorHappened
+            refactorHappened: currentAccidentDetails.refactorHappened,
+            iconName: currentAccidentDetails.iconName
+
         }
 
         try {
@@ -109,7 +111,8 @@ export default function Chat() {
                 historyChatContent: response.data.historyChatContent,
                 title: response.data.title,
                 _id: response.data._id,
-                refactorHappened: response.data.refactorHappened
+                refactorHappened: response.data.refactorHappened,
+                iconName: response.data.iconName
             }));   
 
             // @ 刷新 titleSlider
@@ -137,11 +140,11 @@ export default function Chat() {
             setLoadingStates(prev => ({ ...prev, API_fetchAccidentDetailsTitle: true }));
 
             const response = await axios.post('/api/accidentDetails/getAccidentDetailsTitle', request, { headers: authHeader() });
-            const newTitleSider = response.data.titles.map((item: {_id: string, title: string}, index: number) => {               
+            const newTitleSider = response.data.titles.map((item: {_id: string, title: string, iconName: string}, index: number) => {       
                 return {
                     key: item._id,
                     label: item.title,
-                    icon: <ReturnIcon />
+                    icon: <ReturnIcon IconName={item.iconName} />
                 }
             })
             setTitlesSider(newTitleSider);
@@ -171,7 +174,8 @@ export default function Chat() {
                 historyChatContent: response.data.historyChatContent,
                 title: response.data.title,
                 _id: response.data._id,
-                refactorHappened: response.data.refactorHappened
+                refactorHappened: response.data.refactorHappened,
+                iconName: response.data.iconName
             }));   
             setCCGCurrentQuestion(response.data.historyChatContent[response.data.historyChatContent.length - 1].value)
 
@@ -225,6 +229,50 @@ export default function Chat() {
         }
     }
 
+    // ----- 更新除了對話的資料
+    const API_updateViewerData = async () => {
+        const request = { 
+            _id: currentAccidentDetails._id,
+            title: currentAccidentDetails.title,
+            iconName: currentAccidentDetails.iconName
+        }
+
+        try {
+            setLoadingStates(prev => ({ ...prev, API_updateViewerData: true }));
+
+            const response = await axios.post('/api/accidentDetails/updateViewerData', request, { headers: authHeader() });
+
+            // @ 更新左邊 Sider 的資料（無串接API, 單純更新畫面）
+            const updateTitlesSider = (request: {_id:string, title:string, iconName: string}) => {
+                const updatedTitles = titlesSider.map((item) => {
+                    if (item.key === request._id) {
+                        return {
+                            ...item,
+                            label: request.title, // 更新 label
+                            icon: {
+                                ...item.icon, // 保留 icon 內其他屬性不變
+                                props: { ...item.icon.props, IconName: request.iconName } // 更新 IconName
+                            }
+                        };
+                    }
+                    return item;
+                });
+                setTitlesSider(updatedTitles);
+            };
+            updateTitlesSider(request);
+
+        } catch (error) {
+            console.error('[API_updateViewerData] Error: ', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, API_updateViewerData: false }));
+        }
+    }
+
+    // -v- 更新資料
+    const updateViewerData = () => {
+        API_updateViewerData();
+    }
+
     // -v- 還原事發經過
     const refactorEvent = (_id: string) => {
         setCurrentAccidentDetails(prevState => ({
@@ -246,10 +294,6 @@ export default function Chat() {
         setCurrentAccidentDetails(accidentDetails);
         setUserDescription("");
         setCCGCurrentQuestion("");
-        setCurrentAccidentDetails(prevState => ({
-            ...prevState,
-            refactorHappened: ""
-        }));
     }
 
     // -v- 加入聊天內容
@@ -291,6 +335,12 @@ export default function Chat() {
         }
         catch (error) { }
     }
+
+    // -v- 更新 ICON
+    const handleSelectionChangeIcon = (iconName: string) => {
+        setCurrentAccidentDetails(prevState => ({ ...prevState, iconName: iconName }));
+    }
+
 
     // -v- 聊天內容輸出
     const RenderDisplayChatContent = () => {
@@ -491,8 +541,7 @@ export default function Chat() {
 
             {/* 事實生成框 rightPanel*/}
             <Col xl={colSizeDict.rightPanel_divSize} lg={colSizeDict.rightPanel_divSize} md={24} sm={24} xs={24} >
-                <Divider />
-                <div className='w-full h-screen p-10 overflow-y-scroll no-scrollbar'>
+                <div className='w-full h-screen p-10 overflow-y-scroll no-scrollbar pb-0'>
                     <Tabs aria-label='Options' selectedKey={rightPanelSelect} onSelectionChange={(key) => setRightPanelSelect(String(key))} >
                         
                         <Tab key="事實生成" title="事實生成">
@@ -565,9 +614,35 @@ export default function Chat() {
                                 </CardHeader>
                                 <Divider/>
                                 
-                                <div className='p-5'>
-                                    <Input variant='underlined' value={currentAccidentDetails.title} label={"Title"} />
-                                    <IconSelector  />
+                                <div className='p-5 grid grid-cols-1 gap-6 '>
+                                    <Input 
+                                        variant='underlined' value={currentAccidentDetails.title} label={"Title"} 
+                                        onValueChange={(e) => {setCurrentAccidentDetails(prevState => ({...prevState, title: e}))}} />
+                                    <IconSelector 
+                                        currentValue={currentAccidentDetails.iconName} 
+                                        selectionChangeIcon={handleSelectionChangeIcon}
+                                        />
+                                </div>
+
+                                <div className='gap-5 absolute bottom-0 w-full flex items-center justify-center h-20'>
+                                    <Button 
+                                        className='text-xl'
+                                        onPress={(e) => {updateViewerData()}}
+                                        isLoading={loadingStates?.API_refactorEvent}
+                                        disabled={currentAccidentDetails._id == ""} 
+                                        color={"success"}
+                                        variant="bordered" >
+                                        更新資料
+                                    </Button>
+                                    <Button 
+                                        className='text-xl'
+                                        onPress={(e) => {}}
+                                        isLoading={loadingStates?.API_refactorEvent}
+                                        disabled={currentAccidentDetails._id == ""} 
+                                        color={"danger"}
+                                        variant="bordered" >
+                                        刪除資料
+                                    </Button>
                                 </div>
                                 
                             </Card>

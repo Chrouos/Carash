@@ -66,7 +66,8 @@ exports.retrievalContent = async (req, res) => {
             verificationCode: requestData.verificationCode || "",
             incidentJson: requestData.incidentJson || {},
             ccgCurrentQuestion: requestData.ccgCurrentQuestion || "",
-            refactorHappened: requestData.refactorHappened || ""
+            refactorHappened: requestData.refactorHappened || "",
+            iconName: requestData.iconName || "File",
         };
 
         // - 目前還未有任何資訊: 第一次對話
@@ -99,7 +100,8 @@ exports.retrievalContent = async (req, res) => {
                     title: responseData.title,
                     historyChatContent: [],
                     incidentJson: responseData.incidentJson,
-                    verificationCode: requestData.verificationCode
+                    verificationCode: requestData.verificationCode,
+                    iconName: responseData.iconName,
                 }
             )
             responseData._id = createNewChat_id.toString()
@@ -188,7 +190,7 @@ exports.getAccidentDetailsTitle = async (req, res) => {
             collectionName = 'AccidentDetails', 
             query = {verificationCode: verificationCode}, 
             sort = {"historyChatContent.createTime": -1}, // 根據對話的最新時間排序
-            projection = { title: 1 });
+            projection = { title: 1, iconName: 1 });
 
         responseData.titles = titles
         res.status(200).send(responseData);
@@ -324,4 +326,47 @@ exports.litigantAgent = async (req, res) => {
         res.status(500).send(`[litigantAgent] Error: ${error.message || error}`);
     }
 
+}
+
+// ----- 更新除了對話的其他資料
+exports.updateViewerData = async (req, res) => {
+    /*
+        title,
+        _id,
+        iconName
+    */
+
+    try {
+
+        // - 呼叫資料庫 MongoDB
+        const mongoDB = new MongoDB_Tools();
+
+        // - 整理 request data
+        const requestData = req.body;
+        
+        // - 回傳資訊
+        var responseData = {
+            _id: requestData._id || "",
+            title: requestData.title || createTime, // + " - " + requestData.userDescription, 
+            iconName: requestData.iconName || "File",
+        };
+
+        // - 儲存至資料庫內部
+        await mongoDB.update(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(responseData._id) },
+            updateOperation = {
+                $set: {
+                    title: responseData.title,
+                    iconName: responseData.iconName
+                }
+            }
+        );
+
+        res.status(200).send(responseData);
+
+    } catch (error) {
+        console.error("[templateJSON] Error fetching from OpenAI:", error.message || error);
+        res.status(500).send(`[templateJSON] Error fetching from OpenAI: ${error.message || error}`);
+    }
 }

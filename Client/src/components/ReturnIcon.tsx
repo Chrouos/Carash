@@ -35,24 +35,25 @@ const ReturnIcon: React.FC<ReturnIconProps> = ({ IconName = "File" }) => {
 };
 
 interface IconSelectorProps {
-    className?: string;
+    className?: string; // 可選，用於自定義 CSS 類名
+    currentValue?: string; // 當前選擇的圖標名稱，可選
+    selectionChangeIcon: (iconName: string) => void; // 當圖標選擇發生變化時的回調函數
 }
 
-const IconSelector: React.FC<IconSelectorProps> = ({ className = "" }) => {
-
-    const [value, setValue] = React.useState("");
+const IconSelector: React.FC<IconSelectorProps> = ({ className = "", currentValue = "File", selectionChangeIcon}) => {
 
     const handleSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setValue(e.target.value);
+        const selectedValue = e.target.value;
+        selectionChangeIcon(selectedValue);
     };
 
     return (<>
         <Select
             label="Choose an Icon"
             placeholder="Select an icon"
-            className="max-w-xs"
-            startContent={value ? <ReturnIcon IconName={value} /> : ""}
-            selectedKeys={[value]}
+            className=" max-w-full"
+            startContent={currentValue ? <ReturnIcon IconName={currentValue} /> : ""}
+            selectedKeys={[currentValue]}
             onChange={handleSelectionChange}
         >
             {iconKeys.map((key) => (
