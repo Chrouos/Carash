@@ -54,7 +54,8 @@ export default function Chat() {
         API_retrievalContent: false,
         API_fetchAccidentDetailsTitle: false,
         API_fetchAccidentDetailsContent: false,
-        API_refactorEvent: false
+        API_refactorEvent: false,
+        API_fatchRandomJudgment: false
     }); // = 儲存各個API的loading狀態
     useEffect(() => {  
         // @ 當任何一個API的loading狀態改變時，更新isLoading
@@ -73,8 +74,14 @@ export default function Chat() {
     const [userDescription, setUserDescription] = useState<string>(''); // = 使用者當前輸入的內容
     const [ccgCurrentQuestion, setCCGCurrentQuestion] = useState<string>("車禍發生事故"); // = CCG 當前的問題
     const [currentAccidentDetails, setCurrentAccidentDetails] = useState<AccidentDetailsType>(accidentDetails); // = 當前車禍資料內容
+    const [ccgLastQuestionKey, setCCGLastQuestionKey] = useState<string>(""); // = CCG 提出的上一個問題
+    const [twiceFlag, setTwiceFlag] = useState<Boolean>(false); // = CCG 提出相同問題的二次機會
 
     const historyChatContentRef = useRef<HTMLDivElement>(null); // = 對話內容的 REF
+
+    // : 參考判決書
+    const [selectJudgment, setSelectJudgment] = useState<string>(''); // = 參考判決書
+    const [selectJudgmentID, setSelectJudgmentID] = useState<number>(0); // = 參考判決書ID
 
     // : 生成視窗框
     const [rightPanelSelect, setRightPanelSelect] = useState<string>("事件細節"); // = 目前選擇的 rightPanel
@@ -98,7 +105,9 @@ export default function Chat() {
             historyChatContent: new_historyChatContent,
             currentChooseType: currentChooseType,
             refactorHappened: currentAccidentDetails.refactorHappened,
-            iconName: currentAccidentDetails.iconName
+            iconName: currentAccidentDetails.iconName,
+            twiceFlag: twiceFlag,
+            ccgLastQuestionKey: ccgLastQuestionKey
 
         }
 
@@ -121,7 +130,11 @@ export default function Chat() {
             if (isNewConversation) { API_fetchAccidentDetailsTitle(); }
             
             // @ 更新當前問題   
-            setCCGCurrentQuestion(response.data.ccgCurrentQuestion)
+            setCCGCurrentQuestion(response.data.ccgCurrentQuestion);
+            // @ 更新上一個問題   
+            setCCGLastQuestionKey(response.data.ccgLastQuestionKey);
+            // @ 更新二次機會狀態
+            setTwiceFlag(response.data.twiceFlag);
 
         } catch (error) {
             console.error('[API_retrievalContent] Error: ', error);
@@ -214,8 +227,8 @@ export default function Chat() {
     // ----- 當事人 Agent
     const API_litigantAgent = async () => {
         const request = { 
-            refactorHappened: currentAccidentDetails.refactorHappened,
-            question: ccgCurrentQuestion
+            selectJudgment: selectJudgment,
+            question: ccgCurrentQuestion || "請主要描述車禍當時的情況"
         }
 
         try {
@@ -295,6 +308,27 @@ export default function Chat() {
         }
     }
 
+    // ----- 隨機取得參考判決書
+    const API_fatchRandomJudgment = async () => {
+        const request = {
+            selectJudgment: selectJudgment,
+            selectJudgmentID: selectJudgmentID
+        }
+
+        try {
+            setLoadingStates(prev => ({ ...prev, API_fatchRandomJudgment: true }));
+            
+            const response = await axios.post('/api/accidentDetails/getRandomJudgment', request, { headers: authHeader() });
+            setSelectJudgment(response.data.selectJudgment);
+            setSelectJudgmentID(response.data.selectJudgmentID);
+
+        } catch (error) {
+            console.error('[API_fatchRandomJudgment] Error: ', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, API_fatchRandomJudgment: false }));
+        }
+    }
+
     // -v- 更新資料
     const updateViewerData = () => {
         API_updateViewerData();
@@ -303,6 +337,11 @@ export default function Chat() {
     // -v- 刪除資料
     const deleteAccidentDetails = () => {
         API_deleteAccidentDetails();
+    }
+
+    // -v- 取得隨機判決書
+    const getRandomJudgment = () => {
+        API_fatchRandomJudgment();
     }
 
     // -v- 還原事發經過
@@ -326,6 +365,9 @@ export default function Chat() {
         setCurrentAccidentDetails(accidentDetails);
         setUserDescription("");
         setCCGCurrentQuestion("");
+        setCCGLastQuestionKey("");
+        setTwiceFlag(false);
+        getRandomJudgment();
     }
 
     // -v- 加入聊天內容
@@ -438,15 +480,22 @@ export default function Chat() {
     // => 初始化讀取
     useEffect(() => {
         API_fetchAccidentDetailsTitle(); // = 獲得標題
+        createNewConversation(); // 創建一個新對話
     }, [])
 
     // => 偵測Enter
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        // 確保在按下 Enter 鍵時，用戶描述不是空的，並且沒有按下 Shift 鍵
-        if (e.key === 'Enter' && e.shiftKey && userDescription.trim() !== '') {
+        // 按下 Shift + Enter 鍵 ， 會換行
+        if (e.key === 'Enter' && e.shiftKey) {
+            return;
+        }
+
+        // 確保在按下 Enter 鍵時，且用戶描述不是空的，送出聊天內容
+        if (e.key === 'Enter' && userDescription.trim() !== '') {
             e.preventDefault();
             enterChatValue();
         }
+        
     };
 
     // => 讓對話內容如果更動保持在最下面
@@ -460,7 +509,7 @@ export default function Chat() {
     return (<>  <Layout>
 
         {/* 左邊 Sider */}
-        <Sider width="5%" className='max-h-screen ' style={{ background: "#9c9c9c37" }} collapsed={true}>
+        <Sider width="10%" className='max-h-screen ' style={{ background: "#9c9c9c37" }} collapsed={false}>
 
 
             {/* 全新對話 */}
@@ -515,9 +564,7 @@ export default function Chat() {
                                                 width="64" height="64" sizes="100vw"  
                                                 priority={true} />
                                             <p>
-                                                你好，歡迎來到 CCG，我是你的法律法遵機器人。請問有什麼我可以幫你的嗎？ <br />
-                                                請主要描述車禍當時的情況（包含地址、時間、路段、天氣...等）
-                                                以下是一些詢問範例
+                                                你好，我是ccg車禍事故代理人，可以協助交通警察完成車禍事故發生經過的紀錄，請描述車禍當時的情況，包含時間、地點、事故詳情...等等，以下是一些回答範例。
                                             </p>
                                         </CardHeader>
 
@@ -525,8 +572,8 @@ export default function Chat() {
 
                                         <CardBody >
                                             <div>
-                                                <p className='text-base'>&#8658; 108年4月30日，大概早上十點多的時候，我騎重機在中山路附近行駛。有台轎車沒有遵守交通號誌，闖紅燈，撞到我害我倒地，左邊膝蓋開放性骨折還有很多擦傷。</p>
-                                                <p className='text-base'>&#8658; 我當時從北投區出發，我的行進方向是綠燈，那天天氣晴朗，路況正常，我當時行駛車速大約50公里，我的車後燈損壞及車身有些擦傷。</p>
+                                                <p className='text-base'>&#8658; 早上十點多的時候，我騎重機在中山路附近行駛。與一台轎車發生碰撞。</p>
+                                                <p className='text-base'>&#8658; 昨日下午，我騎腳踏車在人行道上面，與一輛機車發生擦撞。</p>
                                             </div>
                                         </CardBody>
                                     </Card>
@@ -677,6 +724,52 @@ export default function Chat() {
                                     </Button>
                                 </div>
                                 
+                            </Card>
+                        </Tab>
+
+                        <Tab key="參考判決" title="參考判決">
+                            <Card style={{height: "88vh"}}>
+
+                                <CardHeader className="flex gap-3">
+                                    <p className="text-md">參考判決</p>
+                                    <p className="text-small text-default-500">隨機判決書參考判決</p>
+                                </CardHeader>
+                                <Divider/>
+
+                                <div className='p-5 h-full'>
+                                    <Textarea
+                                        label="Description"
+                                        variant="bordered"
+                                        value={selectJudgment}
+                                        onValueChange={() => {}}
+                                        placeholder="參考判決"
+                                        classNames={{
+                                            input: "resize-y min-h-[65vh]",
+                                        }} 
+                                        disabled
+                                    />
+                                </div>
+
+                                <div className='grid grid-cols-2 gap-4 pr-4 pl-4 place-content-center h-28'>
+                                    <Button 
+                                        className='bg-transparent border-2 border-slate-600 text-xl '
+                                        onPress={autoConversation}
+                                        isLoading={isAutoConversation} > 
+                                        自動回話
+                                        {/* {!isAutoConversation ? <CaretRightOutlined /> : <PauseOutlined />} */}
+                                        {/* <CaretRightOutlined /> */}
+                                        
+                                    </Button>
+
+                                    <Button 
+                                        className='text-xl'
+                                        onPress={getRandomJudgment}
+                                        isLoading={loadingStates?.API_fatchRandomJudgment}
+                                         >
+                                        重選參考 
+                                    </Button>
+                                </div>
+
                             </Card>
                         </Tab>
 

@@ -9,6 +9,7 @@ app.post('/api/accidentDetails/refactorEvent', accidentDetailsController.refacto
 app.post('/api/accidentDetails/litigantAgent', accidentDetailsController.litigantAgent);
 app.post('/api/accidentDetails/updateViewerData', accidentDetailsController.updateViewerData);
 app.post('/api/accidentDetails/deleteAccidentDetails', accidentDetailsController.deleteAccidentDetails);
+app.post('/api/accidentDetails/getRandomJudgment', accidentDetailsController.getRandomJudgment);
 
 module.exports = app;
 

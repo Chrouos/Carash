@@ -9,14 +9,18 @@ const { getTaiwanTime, toISO, toHumanReadable } = require('../tools/TimeTools');
 // ----- 擷取對話 -> incidentJson.車禍發生事故
 exports.retrievalContent = async (req, res) => {
     /*
-        ccgCurrentQuestion: 機器人的提問,    
-        userDescription: 使用者的描述,
-        incidentJson,
+        userDescription, 使用者回復
+        verificationCode,
+        ccgCurrentQuestion, 現在問題
+        incidentJson, 事件儲存格式
         title,
         _id,
         historyChatContent,
-        verificationCode,
-        refactorHappened
+        currentChooseType,
+        refactorHappened, 還原事故
+        iconName,
+        twiceFlag, 問題二次機會
+        ccgLastQuestionKey, 上一個問題
     */
 
     try {
@@ -62,12 +66,15 @@ exports.retrievalContent = async (req, res) => {
         var responseData = {
             _id: requestData._id || "",
             title: requestData.title || createTime, // + " - " + requestData.userDescription, 
+            userDescription: requestData.userDescription || "",
             historyChatContent: requestData.historyChatContent || [],
             verificationCode: requestData.verificationCode || "",
             incidentJson: requestData.incidentJson || {},
             ccgCurrentQuestion: requestData.ccgCurrentQuestion || "",
             refactorHappened: requestData.refactorHappened || "",
             iconName: requestData.iconName || "File",
+            twiceFlag: requestData.twiceFlag || false,
+            ccgLastQuestionKey: requestData.ccgLastQuestionKey || "",
         };
 
         // - 目前還未有任何資訊: 第一次對話
@@ -77,13 +84,14 @@ exports.retrievalContent = async (req, res) => {
             // + 初始模組
             const { firstPromptModule } = require("./data/prompt")
             var firstPrompt = firstPromptModule(requestData);
+            console.log("firstPrompt : ", firstPrompt);
             
             const firstMessages = [ { "role": "system", "content": firstPrompt } ]
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo-1106",
                 messages: firstMessages,
-                temperature: 0.5,
-                max_tokens: 1024,
+                temperature: 0.01,
+                max_tokens: 2048,
                 top_p: 1,
                 frequency_penalty: 0,
                 presence_penalty: 0,
@@ -113,12 +121,13 @@ exports.retrievalContent = async (req, res) => {
             // + 擷取模組
             const { tidyPromptModule } = require("./data/prompt")
             var tidyPrompt = tidyPromptModule(requestData);
+            console.log("tidyPrompt : ", tidyPrompt);
 
             tidyMessage = [{ "role": "system", "content": tidyPrompt }]
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo-1106",
                 messages: tidyMessage,
-                temperature: 0.5,
+                temperature: 0.01,
                 max_tokens: 1024,
                 top_p: 1,
                 frequency_penalty: 0,
@@ -126,15 +135,24 @@ exports.retrievalContent = async (req, res) => {
             });
 
             // ~ 回傳的有可能不是 JSON
-            try { responseData.incidentJson["車禍發生事故"] = JSON.parse(gptResponse.data.choices[0].message.content); } 
+            try { 
+                let response = gptResponse.data.choices[0].message.content
+                let tmpJson = JSON.parse(response.replace(/'/g, '"'))
+                for (let key in tmpJson){
+                    if (responseData.incidentJson["車禍發生事故"].hasOwnProperty(key)){
+                        responseData.incidentJson["車禍發生事故"][key] = tmpJson[key]
+                    }
+                }
+             } 
             catch (error) { console.log("Error gptResponse :\n", gptResponse.data.choices[0].message.content) }
         }
 
         // + 提問模組
         const { generateQuestionKeyModule } = require("./data/prompt")
-        var questionKey = generateQuestionKeyModule(responseData, questionExplain);
+        var questionprompt = generateQuestionKeyModule(responseData, questionExplain);
+        console.log("questionprompt : ", questionprompt);
 
-        const questionMessage = [ { "role": "system", "content": questionKey }, ]
+        const questionMessage = [ { "role": "system", "content": questionprompt }, ]
         const gptResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo-1106",
             messages: questionMessage,
@@ -146,6 +164,7 @@ exports.retrievalContent = async (req, res) => {
         });
         const responseContent = gptResponse.data.choices[0].message.content;
         responseData.ccgCurrentQuestion = responseContent;
+        console.log("CCG : ", responseContent);
 
         // - 回傳結果
         const newContent = [ 
@@ -230,7 +249,8 @@ exports.refactorEvent = async (req, res) => {
         var responseData = {}
         
         // - Prompt
-        const { RefactorEventPrompt } = require("./data/prompt")
+        const { refactorEventPromptModule } = require("./data/prompt");
+        var refactorEventPrompt = refactorEventPromptModule(requestData);
 
         // - OpenAI
         const configCrypto = new ConfigCrypto();
@@ -242,14 +262,13 @@ exports.refactorEvent = async (req, res) => {
 
         // + 還原事實模組
         const happenedMessage = [
-            { "role": "system", "content": RefactorEventPrompt },
-            { "role": "user", "content": JSON.stringify(requestData.incidentJson) },
+            { "role": "system", "content": refactorEventPrompt },
         ]
         const gptResponse = await openai.createChatCompletion({
-            model: "gpt-3.5-turbo",
+            model: "gpt-3.5-turbo-1106",
             messages: happenedMessage,
             temperature: 0.1,
-            max_tokens: 1024,
+            max_tokens: 2048,
             top_p: 1,
             frequency_penalty: 0,
             presence_penalty: 0,
@@ -281,7 +300,7 @@ exports.refactorEvent = async (req, res) => {
 exports.litigantAgent = async (req, res) => {
 
     /*
-        cleanJudgementData,
+        selectJudgment,
         question
     */
 
@@ -301,6 +320,7 @@ exports.litigantAgent = async (req, res) => {
         // + 當事人模組
         const { litigantAgentModule } = require("./data/prompt")
         var agentPrompt = litigantAgentModule(requestData);
+        console.log("agentPrompt : ", agentPrompt);
 
         const message = [
             { "role": "system", "content": agentPrompt }
@@ -309,7 +329,7 @@ exports.litigantAgent = async (req, res) => {
         const gptResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo-1106",
             messages: message,
-            temperature: 0.5,
+            temperature: 0.1,
             max_tokens: 1024,
             top_p: 1,
             frequency_penalty: 0,
@@ -317,7 +337,8 @@ exports.litigantAgent = async (req, res) => {
         });
 
         const responseContent = gptResponse.data.choices[0].message.content;
-        responseData.agentDescription = responseContent
+        responseData.agentDescription = responseContent;
+        console.log("UserAgent : ", responseContent);
 
         res.status(200).send(responseData);
     
@@ -400,5 +421,38 @@ exports.deleteAccidentDetails = async (req, res) => {
     } catch (error) {
         console.error("[deleteAccidentDetails] Error fetching from OpenAI:", error.message || error);
         res.status(500).send(`[deleteAccidentDetails] Error fetching from OpenAI: ${error.message || error}`);
+    }
+}
+
+// ----- 隨機存取參考判決書
+exports.getRandomJudgment = async (req, res) => {
+    /*
+        selectJudgment
+        selectJudgmentID
+    */
+
+    try {
+        
+        // - 整理request, response
+        const requestData = req.body;
+        var responseData = {
+            selectJudgment: requestData.selectJudgment,
+            selectJudgmentID: requestData.selectJudgmentID
+        }
+        
+        // - 取得json_judgment
+        const judgmentData = require('./data/json_judgement_0.json');
+        
+        // - 隨機選擇一則
+        responseData.selectJudgmentID = Math.floor(Math.random() * judgmentData.length);
+        responseData.selectJudgment = judgmentData[responseData.selectJudgmentID]["事發經過"];
+        console.log("selectJudment : ", responseData.selectJudgment);
+
+        res.status(200).send(responseData);
+
+    }
+    catch (error) {
+        console.error("[getRandomJudgment] Error:", error.message || error);
+        res.status(500).send(`[getRandomJudgment] Error: ${error.message || error}`);
     }
 }
