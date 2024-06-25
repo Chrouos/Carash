@@ -509,7 +509,7 @@ export default function Chat() {
     return (<>  <Layout>
 
         {/* 左邊 Sider */}
-        <Sider width="10%" className='max-h-screen ' style={{ background: "#9c9c9c37" }} collapsed={false}>
+        <Sider width="14%" className='max-h-screen ' style={{ background: "#9c9c9c37" }} collapsed={false}>
 
 
             {/* 全新對話 */}
@@ -627,7 +627,7 @@ export default function Chat() {
                             <Card style={{height: "88vh"}}>
                                 <CardHeader className="flex gap-3">
                                     <p className="text-md">事實生成</p>
-                                    <p className="text-small text-default-500">經過模組還原的事實</p>
+                                    <p className="text-small text-default-400">經過模組還原的事實</p>
                                 </CardHeader>
                                 <Divider/>
                                 
@@ -672,7 +672,7 @@ export default function Chat() {
 
                                 <CardHeader className="flex gap-3">
                                     <p className="text-md">事件細節</p>
-                                    <p className="text-small text-default-500">條列式事件細節</p>
+                                    <p className="text-small text-default-400">條列式事件細節</p>
                                 </CardHeader>
                                 <Divider/>
 
@@ -689,7 +689,7 @@ export default function Chat() {
 
                                 <CardHeader className="flex gap-3">
                                     <p className="text-md">聊天室設定</p>
-                                    <p className="text-small text-default-500">對話內容設定</p>
+                                    <p className="text-small text-default-400">對話內容設定</p>
                                 </CardHeader>
                                 <Divider/>
                                 
@@ -732,7 +732,7 @@ export default function Chat() {
 
                                 <CardHeader className="flex gap-3">
                                     <p className="text-md">參考判決</p>
-                                    <p className="text-small text-default-500">隨機判決書參考判決</p>
+                                    <p className="text-small text-default-400">隨機判決書參考判決</p>
                                 </CardHeader>
                                 <Divider/>
 
