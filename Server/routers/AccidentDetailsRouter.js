@@ -10,6 +10,7 @@ app.post('/api/accidentDetails/litigantAgent', accidentDetailsController.litigan
 app.post('/api/accidentDetails/updateViewerData', accidentDetailsController.updateViewerData);
 app.post('/api/accidentDetails/deleteAccidentDetails', accidentDetailsController.deleteAccidentDetails);
 app.post('/api/accidentDetails/getRandomJudgment', accidentDetailsController.getRandomJudgment);
+app.post('/api/accidentDetails/saveUpdatedDetails', accidentDetailsController.saveUpdatedDetails);
 
 module.exports = app;
 

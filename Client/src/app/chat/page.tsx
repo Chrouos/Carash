@@ -329,6 +329,23 @@ export default function Chat() {
         }
     }
 
+    // 儲存編輯後的Json
+    const saveUpdatedDetails = async (updatedDetails: AccidentDetailsType) => {
+        const request = {
+            updatedDetails: updatedDetails
+        }
+
+        try {
+            const response = await axios.post('/api/accidentDetails/saveUpdatedDetails', request, {headers: authHeader()});
+            // 更新狀態
+            setCurrentAccidentDetails(response.data.updatedDetails);
+            console.log('Details saved successfully');
+            
+        } catch (error) {
+            console.error('Error saving details:', error);
+        }
+    };
+
     // -v- 更新資料
     const updateViewerData = () => {
         API_updateViewerData();
@@ -364,7 +381,7 @@ export default function Chat() {
         // @ 復原所有內容
         setCurrentAccidentDetails(accidentDetails);
         setUserDescription("");
-        setCCGCurrentQuestion("");
+        setCCGCurrentQuestion("請主要描述車禍當時的情況");
         setCCGLastQuestionKey("");
         setTwiceFlag(false);
         getRandomJudgment();
@@ -509,7 +526,7 @@ export default function Chat() {
     return (<>  <Layout>
 
         {/* 左邊 Sider */}
-        <Sider width="14%" className='max-h-screen ' style={{ background: "#9c9c9c37" }} collapsed={false}>
+        <Sider width="12%" className='max-h-screen ' style={{ background: "#9c9c9c37" }} collapsed={false}>
 
 
             {/* 全新對話 */}
@@ -679,7 +696,9 @@ export default function Chat() {
                                 <AccidentDetailJson 
                                     accidentDetails={currentAccidentDetails}
                                     currentChooseType={currentChooseType}
-                                    setCurrentChooseType={setCurrentChooseType} />
+                                    setCurrentChooseType={setCurrentChooseType} 
+                                    onSave={saveUpdatedDetails}
+                                />
                             </Card>
                         </Tab>
 

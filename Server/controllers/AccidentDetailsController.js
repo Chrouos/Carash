@@ -264,6 +264,8 @@ exports.refactorEvent = async (req, res) => {
         const happenedMessage = [
             { "role": "system", "content": refactorEventPrompt },
         ]
+        console.log("refactorEventPrompt : ", refactorEventPrompt);
+        
         const gptResponse = await openai.createChatCompletion({
             model: "gpt-3.5-turbo-1106",
             messages: happenedMessage,
@@ -454,5 +456,41 @@ exports.getRandomJudgment = async (req, res) => {
     catch (error) {
         console.error("[getRandomJudgment] Error:", error.message || error);
         res.status(500).send(`[getRandomJudgment] Error: ${error.message || error}`);
+    }
+}
+
+exports.saveUpdatedDetails = async (req, res) => {
+    /*
+        updatedDetails
+    */
+    try{
+        
+        // 整理request, response
+        const requestData = req.body;
+        var responseData = {
+            updatedDetails: requestData.updatedDetails
+        }
+        console.log("updatedDetails: ", responseData.updatedDetails.incidentJson);
+
+        // - 呼叫資料庫 MongoDB
+        const mongoDB = new MongoDB_Tools();
+
+        // - 儲存至資料庫內部
+        await mongoDB.update(
+            collectionName = 'AccidentDetails',
+            query = { _id: new ObjectId(responseData.updatedDetails._id) },
+            updateOperation = {
+                $set: {
+                    incidentJson: responseData.updatedDetails.incidentJson,
+                }
+            }
+        );
+
+        res.status(200).send(responseData);
+
+    }
+    catch (error) {
+        console.error("[saveUpdatedDetails] Error:", error.message || error);
+        res.status(500).send(`[saveUpdatedDetails] Error: ${error.message || error}`);
     }
 }
