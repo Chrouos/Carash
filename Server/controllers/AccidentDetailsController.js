@@ -89,6 +89,7 @@ exports.retrievalContent = async (req, res) => {
             const firstMessages = [ { "role": "system", "content": firstPrompt } ]
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo-1106",
+                response_format: { type: "json_object" },
                 messages: firstMessages,
                 temperature: 0.01,
                 max_tokens: 2048,
@@ -126,6 +127,7 @@ exports.retrievalContent = async (req, res) => {
             tidyMessage = [{ "role": "system", "content": tidyPrompt }]
             const gptResponse = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo-1106",
+                response_format: { type: "json_object" },
                 messages: tidyMessage,
                 temperature: 0.01,
                 max_tokens: 1024,
@@ -459,6 +461,7 @@ exports.getRandomJudgment = async (req, res) => {
     }
 }
 
+// ----- 手動更新儲存Json
 exports.saveUpdatedDetails = async (req, res) => {
     /*
         updatedDetails

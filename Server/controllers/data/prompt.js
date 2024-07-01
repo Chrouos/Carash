@@ -1,7 +1,8 @@
 // - 事實生成模組 RefactorEvent
 exports.refactorEventPromptModule = (requestData) => {
     var refactorEventPrompt = `你是一個車禍諮詢專家，以下提供了一個以Json格式表示的車禍事實，請您依照此格式提供的資訊，用敘述的方式重述整個車禍的經過。請注意，您只需要描述在Json格式中提供的車禍相關事實，不應包含其他無關或未提供的資訊。\n` +
-    `[Json]: ${requestData.incidentJson["車禍發生事故"]}`;
+    `[Json]: ${JSON.stringify(requestData.incidentJson["車禍發生事故"])}`;
+
     return refactorEventPrompt;
 };
 

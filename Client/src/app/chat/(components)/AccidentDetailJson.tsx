@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // - NextUI
 import {Button, Input, Divider} from "@nextui-org/react";
@@ -20,24 +20,24 @@ const AccidentDetailJson: React.FC<AccidentDetailJsonProps> = ({ accidentDetails
     // ---------------------------------------- Variables ----------------------------------------
     // const [accidentDetailsTypes, setAccidentDetailsTypes] = useState<string[]>([]); // = AccidentDetails 類別
     const [editable, setEditable] = useState(false);
-    const [localDetails, setLocalDetails] = useState(accidentDetails);
+    const localDetailsRef = useRef(accidentDetails);
 
     useEffect(() => {
-        setLocalDetails(accidentDetails);
+        localDetailsRef.current = accidentDetails;
     }, [accidentDetails]);
 
-    const handleInputChange = (type: string, key: string, value: string) => {
-        setLocalDetails((prevDetails) => ({
-            ...prevDetails,
+    const handleInputChange = useCallback((type: string, key: string, value: string) => {
+        localDetailsRef.current = {
+            ...localDetailsRef.current,
             incidentJson: {
-                ...prevDetails.incidentJson,
+                ...localDetailsRef.current.incidentJson,
                 [type]: {
-                    ...prevDetails.incidentJson[type],
+                    ...localDetailsRef.current.incidentJson[type],
                     [key]: value
                 }
             }
-        }));
-    };
+        };
+    }, []);
 
     // -v- 顯示類型板塊
     // const RenderDisplayAccidentDetailsType = () => {
@@ -65,22 +65,22 @@ const AccidentDetailJson: React.FC<AccidentDetailJsonProps> = ({ accidentDetails
     // -v- 顯示細項板塊
     const RenderDisplayAccidentDetailsIncidentJson = () => {
         const renderList: JSX.Element[] = [];
-        if (localDetails.incidentJson && localDetails.incidentJson[currentChooseType]) {
-            Object.keys(localDetails.incidentJson[currentChooseType]).forEach((key: string, index: number) => {
+        if (localDetailsRef.current.incidentJson && localDetailsRef.current.incidentJson[currentChooseType]) {
+            Object.keys(localDetailsRef.current.incidentJson[currentChooseType]).map((key: string, index: number) => {
                 renderList.push(
                     <Input
-                        key={"RenderDisplayAccidentDetailsIncidentJson-" + index}
+                        key={`RenderDisplayAccidentDetailsIncidentJson-${currentChooseType}-${index}`}
                         label={key}
                         labelPlacement={"outside"}
-                        value={localDetails.incidentJson[currentChooseType][key]}
+                        defaultValue={localDetailsRef.current.incidentJson[currentChooseType][key]}
                         onChange={(e) => handleInputChange(currentChooseType, key, e.target.value)}
                         disabled={!editable}
                     />
-                )
+                );
             });
         }
-        return renderList
-    }
+        return renderList;
+    };
 
     return (<>
 
@@ -105,7 +105,7 @@ const AccidentDetailJson: React.FC<AccidentDetailJsonProps> = ({ accidentDetails
             </Button>
             <Button
                 className='text-xl'
-                onPress={() => { onSave(localDetails); setEditable(false); }}
+                onPress={() => { onSave(localDetailsRef.current); setEditable(false); }}
                 disabled={!editable}>
                 儲存
             </Button>

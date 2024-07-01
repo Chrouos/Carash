@@ -7,6 +7,8 @@ services:
     ports:
       - "8280:8280"
     container_name: carash-server
+    volumes:
+      - ./Server:/usr/src/app
 
   carash-client:
     build: 
