@@ -533,8 +533,13 @@ export default function Chat() {
             <div className='pb-5 justify-center flex'>
                 <Button  
                     className='top-2 min-w-10 h-16'
-                    onPress={createNewConversation}> 
-                    NEW 
+                    onPress={createNewConversation}>                     
+                    <Image 
+                        alt="NEW Conversation" 
+                        src="/ccg_icon.png" 
+                        width="64" height="64" sizes="100vw"  
+                        priority={true} />
+                    NEW Conversation
                 </Button>
             </div>
 
